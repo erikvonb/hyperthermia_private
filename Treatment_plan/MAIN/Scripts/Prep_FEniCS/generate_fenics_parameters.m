@@ -185,6 +185,14 @@ if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist
     end
 end
 
+% Save modelType in .txt file (needed for nonlinear perfusion)
+current=pwd;
+savepath= [current filesep '..' filesep 'Input_to_FEniCS' filesep  ];
+fid = fopen([savepath 'modelType.txt'],'w');
+fprintf(fid, modelType);
+fclose(fid);
+
+
 disp('Extrapolation done')
 disp('---------------------------')
 disp('FEniCS parameters generated')
