@@ -126,7 +126,7 @@ end
 % Finalize boundary condition
 create_bnd_matrices(overwriteOutput, tissue_mat, water_ind, bnd_heat_trans, bnd_temp, modelType);
 
-create_vol_matrices(overwriteOutput, tissue_mat, thermal_conductivity, modified_perf_cap, density, heat_capacity, modelType);
+create_vol_matrices(overwriteOutput, tissue_mat, thermal_conductivity, modified_perf_cap, density, heat_capacity, perfusion, modelType);
 disp('Matrices done.')
 %% 5. Final
 disp('5. Final stage: Extrapolating data.')
@@ -136,7 +136,7 @@ exist_thermal   = exist(get_path('xtrpol_thermal_cond_mat', modelType), 'file');
 exist_perfusion_heatcap = exist(get_path('xtrpol_perfusion_heatcapacity_mat', modelType), 'file');
 exist_heat_capacity = exist(get_path('xtrpol_heat_capacity_mat', modelType), 'file');
 exist_density = exist(get_path('xtrpol_density_mat', modelType), 'file');
-exist_perfusion = exist(get_path('xtrpol_perfusion_mat', modelType), 'file');
+%exist_perfusion = exist(get_path('xtrpol_perfusion_mat', modelType), 'file');
 if length(freq)>1
     path = get_path('xtrpol_PLD_multiple', modelType, freq);
     exist_PLD       = exist(path{1}, 'file');
@@ -147,7 +147,7 @@ end
 interior_mat = tissue_mat ~= water_ind & tissue_mat ~= ext_air_ind;
 [~,nearest_points] = Extrapolation.meijster(interior_mat);
 
-if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist_heat_capacity, exist_perfusion]) || overwriteOutput
+if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist_heat_capacity]) || overwriteOutput
     % Get the nearest element inside the body and distances to the element for
     % all elements
     if ~exist_thermal
@@ -156,9 +156,9 @@ if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist
     if ~exist_density
         finalize('density_mat', nearest_points, modelType);
     end
-    if ~exist_perfusion
-        finalize('perfusion.mat', nearest_points, modelType);
-    end
+    %if ~exist_perfusion
+     %   finalize('perfusion.mat', nearest_points, modelType);
+    %end
     if ~exist_heat_capacity
         finalize('heat_capacity_mat', nearest_points, modelType);
     end
