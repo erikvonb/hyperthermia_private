@@ -40,6 +40,8 @@ if nargin < 2
             path = [stage2path 'thermal_cond.mat'];
         case 'perfusion_heatcapacity_mat'
             path = [stage2path 'perfusion_heatcapacity.mat'];
+        case 'perfusion.mat'
+            path = [stage2path 'perfusion.mat']
         case 'density_mat'
             path = [stage2path 'density.mat'];
         case 'heat_capacity_mat'
@@ -80,6 +82,8 @@ elseif nargin==2
             path = [resultpath 'perfusion_heatcapacity.mat'];
         case 'xtrpol_density_mat'
             path = [resultpath 'density.mat'];
+        case 'xtrpol_perfusion_mat'
+            path = [resultpath 'perfusion.mat']
         case 'xtrpol_heat_capacity_mat'
             path = [resultpath 'heat_capacity.mat'];
         case 'mesh'

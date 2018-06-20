@@ -1,4 +1,4 @@
-function [thermal_conductivity, perf_cap, modified_perf_cap, heat_trans, temp_out, density, heat_capacity] =...
+function [thermal_conductivity, perf_cap, modified_perf_cap, heat_trans, temp_out, density, heat_capacity, perf] =...
           get_parameter_vectors(keyword, modelType)
 % [thermal_conductivity, perf_cap, modified_perf_cap, heat_trans, temp_out] = GET_PARAMETER_VECTORS(path_name)
 % Loads the data from a file specific type of file created by
@@ -33,11 +33,13 @@ if startsWith(modelType, 'duke')
 density=dens;
 heat_capacity=heat_cap;
 perf_cap = heat_cap(index_blood) .* perf .* dens .* dens(index_blood);
+perfusion=perf;
 modified_perf_cap = heat_cap(index_blood) .* modified_perf .* dens .* dens(index_blood);
 elseif startsWith(modelType, 'child')
     heat_capacty = 3617; %Use duke values to model blood perfusion since child does not have blood in model
     density = 1040; % Use duke values...
     perf_cap = heat_capacity .* perf .* density .* density;
+    perfusion=perf;
     modified_perf_cap = heat_cap .* modified_perf .* density .* density;
 end
 end

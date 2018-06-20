@@ -117,7 +117,7 @@ if do_stage_1 % The file to load depends if stage_1 is turned on
 else % If stage 1 is turned off then use premade compilation
     thermal_comp_keyword = 'premade_thermal_compilation';
 end
-[thermal_conductivity, rest_perf_cap, modified_perf_cap, bnd_heat_trans, bnd_temp, density, heat_capacity] =...
+[thermal_conductivity, rest_perf_cap, modified_perf_cap, bnd_heat_trans, bnd_temp, density, heat_capacity, perfusion] =...
     get_parameter_vectors(thermal_comp_keyword, modelType);
 if endsWith(modelType, 'salt')
     thermal_conductivity(82) = 0.596; % Salt water conductivity OBS fel salthalt
@@ -133,10 +133,10 @@ disp('5. Final stage: Extrapolating data.')
 
 % See help finalize for explanation
 exist_thermal   = exist(get_path('xtrpol_thermal_cond_mat', modelType), 'file');
-exist_perfusion = exist(get_path('xtrpol_perfusion_heatcapacity_mat', modelType), 'file');
+exist_perfusion_heatcap = exist(get_path('xtrpol_perfusion_heatcapacity_mat', modelType), 'file');
 exist_heat_capacity = exist(get_path('xtrpol_heat_capacity_mat', modelType), 'file');
 exist_density = exist(get_path('xtrpol_density_mat', modelType), 'file');
-
+exist_perfusion = exist(get_path('xtrpol_perfusion_mat', modelType), 'file');
 if length(freq)>1
     path = get_path('xtrpol_PLD_multiple', modelType, freq);
     exist_PLD       = exist(path{1}, 'file');
@@ -147,7 +147,7 @@ end
 interior_mat = tissue_mat ~= water_ind & tissue_mat ~= ext_air_ind;
 [~,nearest_points] = Extrapolation.meijster(interior_mat);
 
-if ~all([exist_thermal, exist_perfusion, exist_PLD]) || overwriteOutput
+if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist_heat_capacity, exist_perfusion]) || overwriteOutput
     % Get the nearest element inside the body and distances to the element for
     % all elements
     if ~exist_thermal
@@ -156,12 +156,14 @@ if ~all([exist_thermal, exist_perfusion, exist_PLD]) || overwriteOutput
     if ~exist_density
         finalize('density_mat', nearest_points, modelType);
     end
-    
+    if ~exist_perfusion
+        finalize('perfusion.mat', nearest_points, modelType);
+    end
     if ~exist_heat_capacity
         finalize('heat_capacity_mat', nearest_points, modelType);
     end
         
-    if ~exist_perfusion
+    if ~exist_perfusion_heatcap
         finalize('perfusion_heatcapacity_mat', nearest_points, modelType);
     end
     if ~exist_PLD
