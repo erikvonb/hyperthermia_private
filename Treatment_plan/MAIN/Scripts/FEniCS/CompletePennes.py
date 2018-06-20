@@ -75,8 +75,8 @@ T_b = Constant(0.0) # Blood temperature relative body temp
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
 #rho= load_data("../Input_to_FEniCS/density.mat")
 #c= load_data("../Input_to_FEniCS/heat_capacity.mat")
-tissue_mat = loadmat("../Input_to_FEniCS/tissue_mat.mat")
-#w = loadmat("../Input_to_FEniCS/perfusion_mat_nonlin.mat") # TODO script för att generera denna
+tissue_mat = loadmat("../../Data/tissue_mat.mat")
+#w = loadmat("../Input_to_FEniCS/perfusion_mat_nonlin.mat")
 
 # Load the w_c_b, depending on whether one wants to use linear perfusion data or non-linear perfusion data.
 w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
@@ -354,7 +354,8 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
         # Estimate new matrix for perfusion if non_linear_perfusion=True
         #if non_linear_perfusion
-        #   engine.generate_perfusion_nonlin()
+        #   temp=engine.convert_temp_matrix(T, tissue_mat)
+        #   engine.generate_perfusion_nonlin(w, temp , tissue_mat, modelType)
 
     print("Time iteration finished for plan " + str(i+1))
 
