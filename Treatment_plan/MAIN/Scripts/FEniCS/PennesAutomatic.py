@@ -65,12 +65,10 @@ mesh = Mesh('../Input_to_FEniCS/mesh.xml')
 # T_out_ht  alpha times ambient temperature [W/(m^2)]
 
 print('Importing material properties...')
-<<<<<<< HEAD
 T_b = Constant(0.0) # Blood temperature relative body temp
 P1       = load_data("../Input_to_FEniCS/P1.mat")
 P2       = load_data("../Input_to_FEniCS/P2.mat")
 P3       = load_data("../Input_to_FEniCS/P3.mat")
-=======
 # Load P matrices, either just one or several depending on how many HT plans one wants to combine. TODO make it possible to combine plans
 P        = load_data("../Input_to_FEniCS/P.mat")
 
