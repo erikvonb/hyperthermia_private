@@ -25,7 +25,7 @@ def load_data(filename, degree=0):
     
     # Load the .mat file
     f = h5py.File(filename, "r")
-    data = np.array(f.items()[0][1], dtype=float)
+    data = np.array(list(f.items())[0][1], dtype=float)
     f.close()
 
     # Load the intepolation c++ code
@@ -65,26 +65,46 @@ mesh = Mesh('../Input_to_FEniCS/mesh.xml')
 # T_out_ht  alpha times ambient temperature [W/(m^2)]
 
 print('Importing material properties...')
-T_b = Constant(0.0) # Blood temperature relative body temp
 <<<<<<< HEAD
-P       = load_data("../Input_to_FEniCS/P.mat")
-#P2       = load_data("../Input_to_FEniCS/P2.mat")
-#P3       = load_data("../Input_to_FEniCS/P3.mat")
+T_b = Constant(0.0) # Blood temperature relative body temp
+P1       = load_data("../Input_to_FEniCS/P1.mat")
+P2       = load_data("../Input_to_FEniCS/P2.mat")
+P3       = load_data("../Input_to_FEniCS/P3.mat")
 =======
+# Load P matrices, either just one or several depending on how many HT plans one wants to combine. TODO make it possible to combine plans
 P        = load_data("../Input_to_FEniCS/P.mat")
->>>>>>> b3af6bf201cd255b7ec0722c80eb90139e42888a
+
+#P2        = load_data("../Input_to_FEniCS/P2.mat")
+#P3        = load_data("../Input_to_FEniCS/P3.mat")
+
+T_b = Constant(0.0) # Blood temperature relative body temp
+
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
-w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat")
+
+# Load the w_c_b, depending on whether one wants to use linear perfusion data or non-linear perfusion data. TODO create the non-linear perfusion data and implement it in the Matlab code
+w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
+#w_c_b   = load_data("../Input_to_FEniCS/perfusion_heatcapacity_nonlinear.mat") # TODO This should be chosen if a non-linear scaling of the perfusion is wanted, not created yet though
 alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
 
+
+print('Importing temperature matrixes...')
+with h5py.File("../FEniCS_results/temperature.h5",'r') as hdf:
+	Temp=hdf.get('Temp')
+	Temp=np.array(Temp)
+    #print('Shape of Temp \n', Temp.shape)
+	f=h5py.File("../FEniCS_results/temperature.h5",'r')
+	
+	
 #-----------------------
-Tmax= 8 # 0 = 37C, 8 if head and neck, 5 if brain
-Tmin= 7.5 # 0 = 37C
-#scale= 1
-maxIter=180
+Tmax= 5 # 0 = 37C, 8 if head and neck, 5 if brain
+Tmin= 4.5 # 0 = 37C
+Time=1
+dt=0.1
+numSteps=Time/dt
 #-----------------------
 
+# Read current amplitudes and the amplitude limit, generated in MATLAB
 with open("../Input_to_FEniCS/amplitudes.txt") as file:
     amplitudes = []
     for line in file:
@@ -95,6 +115,12 @@ with open("../Input_to_FEniCS/ampLimit.txt") as file:
     for line in file:
         ampLimit.append(line.rstrip().split(","))
 
+# Load the scale of amplitudes and P found when running the original version of Pennes (step 1, i.e pennes.py)
+with open("../FEniCS_results/scale_factor.txt") as file:
+    scaleTotal = file.read()
+    print("Scale is :")
+    print(scaleTotal)
+
 print("Done loading.")
 
 #Change type of data
@@ -104,145 +130,62 @@ maxAmpl=max(amplitudes)
 maxAmp=maxAmpl[0][0]
 maxAmp=int(maxAmpl[0][0])
 maxAmp=float(maxAmp)
+scale=Constant(scaleTotal)
 
-# Define solution space to be continuous piecewise linear
+# Define function space and test/trial functions needed for the variational formulation
 V = FunctionSpace(mesh, "CG", 1)
 u = TrialFunction(V)
 v = TestFunction(V)
 
-scaleTot=1;
-nbrIter=0;
-T=0
-done=False
+#Initial condition
+u_IC= Expression("0", t=0, degree=0) # degree=1?
+u_n=interpolate(u_IC,V)
 
-while (((np.max(T)<Tmin or np.max(T)>Tmax) and nbrIter<=maxIter) or maxAmp>ampLimit):
+P=P*scale # Scale P according to previous calculations
+F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
+#alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
+#alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
+a=lhs(F)
+L=rhs(F)
+
+u=Function(V)
+
+# Now take steps in time and estimate the temperature for each time step, until the full scaling is made.
+t=0
+for n in range(int(numSteps)):
+    # Update time
+    t += dt
+    u_IC.t=t
+
+    # Solve the system
+    solve(a == L, u, solver_parameters={'linear_solver':'gmres'})   #might need to change from gmres to other solver?
+    T =u.vector().array()
     
-    #If amplitude is too high, maxAmp is set to amlitude limit
-    if (maxAmp>ampLimit):# and np.max(T)<Tmax):
-        print np.max(T)
-        scaleAmp=(ampLimit/maxAmp)**2
-        maxAmp=ampLimit
-        scaleTot=scaleTot*(scaleAmp)
-        P=P*scaleAmp
-    
-        V = FunctionSpace(mesh, "CG", 1)
-        u = TrialFunction(V)
-        v = TestFunction(V)
-        # Variation formulation of Pennes heat equation
-        a = v*u*alpha*ds + k_tis*inner(grad(u), grad(v))*dx + w_c_b*v*u*dx
-        L = T_out_ht*v*ds + P*v*dx # + w_c_b*T_b*v*dx not needed due to T_b = 0
-        
-        u = Function(V)
-        solve(a == L, u, solver_parameters={'linear_solver':'gmres'}) #gmres is fast
-        T =u.vector().array()
-        print "Tmax:"
-        print np.max(T)
-        print "Scale:"
-        print scaleTot
-        if (np.max(T)<Tmax):
-            done = True # exit loop
-    
-    elif (maxAmp<=ampLimit):
-        V = FunctionSpace(mesh, "CG", 1)
-        u = TrialFunction(V)
-        v = TestFunction(V)
-        # Variation formulation of Pennes heat equation
-        a = v*u*alpha*ds + k_tis*inner(grad(u), grad(v))*dx + w_c_b*v*u*dx
-        L = T_out_ht*v*ds + P*v*dx # + w_c_b*T_b*v*dx not needed due to T_b = 0
-        u = Function(V)
-        solve(a == L, u, solver_parameters={'linear_solver':'gmres'}) #gmres is fast
-    
-        #Use T to find the scale for P and maxAmp (increase T)
-        if(np.max(T)<=Tmin):
-            if(np.max(T)<0.4*Tmin):
-                P=P*(1.6)
-                scaleTot=scaleTot*1.6
-                maxAmp=sqrt(1.6)*maxAmp
-            elif (np.max(T)>=0.4*Tmin and np.max(T)<0.8*Tmin):
-                P=P*(1.3)
-                scaleTot=scaleTot*1.3
-                maxAmp=sqrt(1.3)*maxAmp
-            elif (np.max(T)>=0.8*Tmin):
-                P=P*1.05
-                scaleTot=1.05*scaleTot
-                maxAmp=sqrt(1.05)*maxAmp
-        #Use T to find the scale for P and maxAmp (decrease T)
-        if(np.max(T)>=Tmax):
-            if(np.max(T)>1.4*Tmax):
-                P=P*0.5
-                scaleTot=scaleTot*0.5
-                maxAmp=sqrt(0.5)*maxAmp
-            elif(np.max(T)>1.2*Tmax and np.max(T)<=1.4*Tmax):
-                P=P*0.7
-                scaleTot=scaleTot*0.7
-                maxAmp=sqrt(0.7)*maxAmp
-            elif (np.max(T)<=1.2*Tmax):
-                P=P*0.85
-                scaleTot=scaleTot*(0.85)
-                maxAmp=sqrt(0.85)*maxAmp
+    # Print the highest temperature
+    print("Tmax for time step number " + str(int(t/dt)) + ":")
+    print(np.max(T))
 
-        T =u.vector().array()
+    u_n.assign(u)
 
-    nbrIter=nbrIter+1
-    print "Tmax:"
-    print np.max(T)
-    print "Scale:"
-    print scaleTot
-    print "MaxAmp:"
-    print maxAmp
 
-    if(done):
-        break
+    # If okay temperature then save data for each time step in format readable by MATLAB
+    """
+    if (np.max(T)<Tmax and np.max(T)>Tmin):
+        Coords = mesh.coordinates()
+        Cells  = mesh.cells()
 
-# Plot and save
-if ((np.max(T)>Tmin and np.max(T)<Tmax and maxAmp<=ampLimit) or maxAmp==ampLimit):
+        # Index for this time step should be included in the name for the temperature file
+        index=t/dt
+        f = h5py.File('../FEniCS_results/temperature_'+ str(index) + '.h5','w')
+        f.create_dataset(name='Temp', data=T)
+        f.create_dataset(name='P',    data=Coords)
+        f.create_dataset(name='T',    data=Cells)
+        # Need a dof(degree of freedom)-map to permutate Temp
+        f.create_dataset(name='Map',  data=dof_to_vertex_map(V))
+        f.close()
+        print("saved T for step: ")
+        print(index)
+    """
 
-    # Plot solution and mesh
-    plot(u)
-    plot(mesh)
-    
-    # Dump solution to file in VTK format         Pvd is used for ParaView, not needed in MATLAB
-    #file = File("../FEniCS_results/temperature.pvd")
-    #u.rename('Temperature','ThisIsSomeString')
-    #file << u
+print('Finished')
 
-    # Save data in a format readable by matlab
-    Coords = mesh.coordinates()
-    Cells  = mesh.cells()
-
-    f = h5py.File('../FEniCS_results/temperature.h5','w')
-
-    f.create_dataset(name='Temp', data=T)
-    f.create_dataset(name='P',    data=Coords)
-    f.create_dataset(name='T',    data=Cells)
-    # Need a dof(degree of freedom)-map to permutate Temp
-    f.create_dataset(name='Map',  data=dof_to_vertex_map(V))
-
-    f.close()
-    
-    #Scale amplitudes and save in a new file
-    amplitudeVec=[]
-    fileAmp=open('../FEniCS_results/scaledAmplitudes.txt','w')
-    for x in amplitudes:
-        a=float(x[0])
-        a=(round(a*100))*sqrt(scaleTot)/100
-        amplitudeVec.append(a)
-        fileAmp.write(str(a) + " ")
-
-    fileAmp.close()
-
-    #Print parameters
-    print "Tmax:"
-    print np.max(T)
-    print "Scale:"
-    print scaleTot
-    print "Nbr of iterations:"
-    print nbrIter
-    print "MaxAmp:"
-    print maxAmp
-
-    if (np.max(T)>Tmax and ampLimit==maxAmp):
-        print " High temperature. Try to increase the interval [Tmin,Tmax] or try a higher maxIter."
-
-else:
-   print "Not enough iterations"
