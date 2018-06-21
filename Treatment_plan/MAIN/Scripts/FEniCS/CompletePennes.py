@@ -336,7 +336,8 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         u_n.assign(u)
         
         # If okay temperature then save data for each time step in format readable by MATLAB
-        if (np.max(T)<Tmax and np.max(T)>Tmin):
+        #if (np.max(T)<Tmax and np.max(T)>Tmin):
+        if t==0.1:
             Coords = mesh.coordinates()
             Cells  = mesh.cells()
             
@@ -348,14 +349,21 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
             f.create_dataset(name='T',    data=Cells)
             # Need a dof(degree of freedom)-map to permutate Temp
             f.create_dataset(name='Map',  data=dof_to_vertex_map(V))
-            f.close()
+
             print("saved T for step: ")
             print(index)
 
         # Estimate new matrix for perfusion if non_linear_perfusion=True
         #if non_linear_perfusion
-        #   temp=engine.convert_temp_matrix(T, tissue_mat)
-        #   engine.generate_perfusion_nonlin(w, temp , tissue_mat, modelType)
+        
+        #   t_mat='../FEniCS_results/temperature_'+ str(i+1)+ str(index) + '.h5'
+        t_mat='../FEniCSls/temperature.h5'
+        print(t_mat)
+        temp=eng.convert_temp_matrix(str(t_mat), tissue_mat)
+        eng.generate_perfusion_nonlin(w, temp , tissue_mat, modelType)
+
+        #if (np.max(T)<Tmax and np.max(T)>Tmin):
+        # f.close()
 
     print("Time iteration finished for plan " + str(i+1))
 
