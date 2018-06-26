@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #--------------
 #Pseudokod:
 
@@ -72,15 +73,11 @@ mesh = Mesh('../Input_to_FEniCS/mesh.xml')
 # T_out_ht  alpha times ambient temperature [W/(m^2)]
 
 print('Importing material properties...')
-<<<<<<< HEAD
+
 T_b = Constant(0.0) # Blood temperature relative body temp
-P1       = load_data("../Input_to_FEniCS/P1.mat")
-P2       = load_data("../Input_to_FEniCS/P2.mat")
-P3       = load_data("../Input_to_FEniCS/P3.mat")
-=======
 # Load P matrices, either just one or several depending on how many HT plans one wants to combine. TODO make it possible to combine plans
 P        = load_data("../Input_to_FEniCS/P.mat")
-
+#When more than one treatment plan is 
 #P2        = load_data("../Input_to_FEniCS/P2.mat")
 #P3        = load_data("../Input_to_FEniCS/P3.mat")
 
@@ -93,7 +90,8 @@ w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is 
 #w_c_b   = load_data("../Input_to_FEniCS/perfusion_heatcapacity_nonlinear.mat") # TODO This should be chosen if a non-linear scaling of the perfusion is wanted, not created yet though
 alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
-
+#c = load_data("../Input_to_FEniCS/.mat",0) #add correct paths
+#rho = load_data("../Input_to_FEniCS/.mat",0)
 
 print('Importing temperature matrixes...')
 with h5py.File("../FEniCS_results/temperature.h5",'r') as hdf:
@@ -149,7 +147,7 @@ u_IC= Expression("0", t=0, degree=0) # degree=1?
 u_n=interpolate(u_IC,V)
 
 P=P*scale # Scale P according to previous calculations
-F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
+F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
 #alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
 #alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
 a=lhs(F)
