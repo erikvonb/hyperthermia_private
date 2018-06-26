@@ -136,7 +136,8 @@ exist_thermal   = exist(get_path('xtrpol_thermal_cond_mat', modelType), 'file');
 exist_perfusion_heatcap = exist(get_path('xtrpol_perfusion_heatcapacity_mat', modelType), 'file');
 exist_heat_capacity = exist(get_path('xtrpol_heat_capacity_mat', modelType), 'file');
 exist_density = exist(get_path('xtrpol_density_mat', modelType), 'file');
-%exist_perfusion = exist(get_path('xtrpol_perfusion_mat', modelType), 'file');
+exist_perfusion = exist(get_path('xtrpol_perfusion_mat', modelType), 'file');
+
 if length(freq)>1
     path = get_path('xtrpol_PLD_multiple', modelType, freq);
     exist_PLD       = exist(path{1}, 'file');
@@ -157,7 +158,7 @@ if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist
         finalize('density_mat', nearest_points, modelType);
     end
     if ~exist_perfusion
-        finalize('perfusion.mat', nearest_points, modelType);
+        finalize('perfusion_mat', nearest_points, modelType);
     end
     if ~exist_heat_capacity
         finalize('heat_capacity_mat', nearest_points, modelType);
@@ -193,8 +194,8 @@ fprintf(fid, modelType);
 fclose(fid);
 
 % Save perfusion without extrapolation 
-save_perf_path=[savepath filesep 'perfusion_original.mat' ]
-save(save_perf_path, 'perfusion', '-v7.3')
+save_perf_path=[savepath filesep 'perfusion_original.mat' ];
+save(save_perf_path, 'perfusion', '-v7.3');
 
 disp('Extrapolation done')
 disp('---------------------------')
