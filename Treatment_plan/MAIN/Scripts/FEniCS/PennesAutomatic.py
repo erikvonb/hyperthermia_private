@@ -7,7 +7,7 @@ import matlab.engine
 
 
 #Change dir to local MAINPATH
-os.chdir(C:\Users\Carl Jendle\HTP_sommar_version3\Treatment_plan\MAIN)
+os.chdir('/Users/rebeccajonasson/Documents/HTP/HTP_sommar_version3/Treatment_plan/MAIN')
 eng=matlab.engine.start_matlab()
 eng.Main1(nargout=0)
 eng.Main2(nargout=0)

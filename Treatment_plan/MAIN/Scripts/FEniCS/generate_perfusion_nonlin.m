@@ -1,4 +1,4 @@
-function perfusion_mat=generate_perfusion_nonlin(perf_mat, temp_mat, tissue_mat, modelType)
+function perfusion_mat=generate_perfusion_nonlin(perf_mat, temp_mat)
 % ha bas W för första T beräkning, ta in nya T i matlab för att beräkna
 % nytt W och sen använda det för beräkna tredje T, repeat
 % spara W för varje temp-steg så det går läsa in i CompletePennes
@@ -6,6 +6,19 @@ function perfusion_mat=generate_perfusion_nonlin(perf_mat, temp_mat, tissue_mat,
 % All values and formula for estimating the perfusion are obtained by the
 % report "Impact of Nonlinear Heat Transfer on Temperature Control in
 % Regional Hyperthermia" by Lang, Erdmann, Seebass
+
+% Load data
+current_dir=pwd;
+datapath=[current_dir filesep '..' filesep 'Input_to_FEniCS' filesep];
+% load tissue_mat
+load([datapath 'tissue_mat.mat']);
+tissue_mat=tissue_Matrix;
+% load modelType
+fid=fopen([datapath 'modelType.txt'], 'r');
+modelType=fgetl(fid);
+% load current perfusion
+load([datapath 'perfusion_current.mat'])
+perfusion_mat=perf_mat;
 
 if startsWith(modelType, 'duke')
     index_muscle = 48;
@@ -17,8 +30,6 @@ elseif startsWith(modelType, 'child')
     index_fat = 8; % Obs this is WM, cant find fat in tissue_file
     index_tumor = 9;
 end
-
-perfusion_mat=perf_mat;
 
 % Change perfusion for the tumor -------------------
 tumor=(tissue_mat==index_tumor);
@@ -66,9 +77,10 @@ index_fat_hot=find(temp_higher_45==fat & temp_higher_45==1);
 perfusion_mat(index_fat_hot)=0.72;
 
 %-----------------------------------------------------
-current_folder=pwd;
-savepath=  [pwd filesep '..' filesep 'Input_to_FEniCS' filesep 'perfusion_mat_nonlin'];
-save(savepath, 'perfusion_mat', '-v7.3');
+
+perf_mat=perfusion_mat;
+savepath=  [datapath 'perfusion_current'];
+save(savepath, 'perf_mat', '-v7.3');
 % borde man spara in m olika index så man kan kolla på dom senare?
 
 end

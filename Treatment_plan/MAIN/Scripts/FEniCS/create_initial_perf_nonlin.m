@@ -50,6 +50,8 @@ elseif startsWith(modelType, 'child')
     initial_perf_mat(index_tumor)=perf_tumor;  
 end
 
-save(get_path('initial_perf_mat'), 'initial_perf_mat', '-v7.3');
+perf_mat=initial_perf_mat;
+save(get_path('initial_perf_mat'), 'perf_mat', '-v7.3');
+save([datapath 'perfusion_current.mat'], 'perf_mat', '-v7.3')
 
 end

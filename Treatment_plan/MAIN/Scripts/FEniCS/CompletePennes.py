@@ -75,8 +75,6 @@ T_b = Constant(0.0) # Blood temperature relative body temp
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
 #rho= load_data("../Input_to_FEniCS/density.mat")
 #c= load_data("../Input_to_FEniCS/heat_capacity.mat")
-tissue_mat = loadmat("../../Data/tissue_mat.mat")
-#w = loadmat("../Input_to_FEniCS/perfusion_mat_nonlin.mat")
 
 # Load the w_c_b, depending on whether one wants to use linear perfusion data or non-linear perfusion data.
 w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
@@ -95,14 +93,6 @@ with open("../Input_to_FEniCS/ampLimit.txt") as file:
     ampLimit = []
     for line in file:
         ampLimit.append(line.rstrip().split(","))
-
-# Read model type
-with open("../Input_to_FEniCS/modelType.txt") as file:
-    modelType=[];
-    for line in file:
-        modelType.append(line.rstrip())
-
-print(modelType)
 
 print("Done loading.")
 
@@ -284,10 +274,9 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     # Perform the time calculations as in CoolPennes------------------------------------------
 
-    #if non_linear_perfusion
-    #         engine.create_initial_perf_nonlin(tissue_mat, w, modelType)
-    #         w= loadmat("../Input_to_FEniCS/initial_perf.mat")
-    #           
+    if non_linear_perfusion
+             engine.create_initial_perf_nonlin()
+             w= loadmat("../Input_to_FEniCS/initial_perf.mat")
 
     Time=1
     dt=0.1
@@ -308,7 +297,7 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     P=P*scale # Scale P according to previous calculations
 #F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
-    F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
+    F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
     #dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
     #alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
     a=lhs(F)
@@ -342,13 +331,20 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
             Cells  = mesh.cells()
             
             # Index for this time step should be included in the name for the temperature file
-            index=t/dt
-            f = h5py.File('../FEniCS_results/temperature_'+ str(i+1)+ str(index) + '.h5','w')
+            index=int(t/dt)
+            f = h5py.File('../FEniCS_results/temperature_'+ str(i+1)+'_'+ str(index) + '.h5','w')
             f.create_dataset(name='Temp', data=T)
             f.create_dataset(name='P',    data=Coords)
             f.create_dataset(name='T',    data=Cells)
             # Need a dof(degree of freedom)-map to permutate Temp
             f.create_dataset(name='Map',  data=dof_to_vertex_map(V))
+            
+            f2 = h5py.File('../FEniCS_results/temperature_temporary.h5','w')
+            f2.create_dataset(name='Temp', data=T)
+            f2.create_dataset(name='P',    data=Coords)
+            f2.create_dataset(name='T',    data=Cells)
+            # Need a dof(degree of freedom)-map to permutate Temp
+            f2.create_dataset(name='Map',  data=dof_to_vertex_map(V))
 
             print("saved T for step: ")
             print(index)
@@ -356,14 +352,12 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         # Estimate new matrix for perfusion if non_linear_perfusion=True
         #if non_linear_perfusion
         
-        #   t_mat='../FEniCS_results/temperature_'+ str(i+1)+ str(index) + '.h5'
-        t_mat='../FEniCSls/temperature.h5'
-        print(t_mat)
-        temp=eng.convert_temp_matrix(str(t_mat), tissue_mat)
-        eng.generate_perfusion_nonlin(w, temp , tissue_mat, modelType)
+        temp=eng.convert_temp_matrix()
+        #eng.generate_perfusion_nonlin(w)
 
         #if (np.max(T)<Tmax and np.max(T)>Tmin):
         # f.close()
+        #f2.close()
 
     print("Time iteration finished for plan " + str(i+1))
 
