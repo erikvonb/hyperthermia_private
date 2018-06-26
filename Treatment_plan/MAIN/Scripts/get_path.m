@@ -13,7 +13,7 @@ sourcepath = [scriptpath filesep '..' filesep 'Results' filesep 'P_and_unscaled_
 stage1path = [scriptpath filesep 'Prep_FEniCS' filesep 'tmp' filesep 'Stage1' filesep];
 stage2path = [scriptpath filesep 'Prep_FEniCS' filesep 'tmp' filesep 'Stage2' filesep];
 %Path to Input_to_FEniCS, under Scripts
-inputpath = [scriptpath filesep '..' filesep 'Input_to_FEniCS' filesep];
+inputpath = [scriptpath filesep 'Input_to_FEniCS' filesep];
 
 if nargin < 2
     switch(lower(str))
@@ -40,7 +40,7 @@ if nargin < 2
             path = [stage2path 'thermal_cond.mat'];
         case 'perfusion_heatcapacity_mat'
             path = [stage2path 'perfusion_heatcapacity.mat'];
-        case 'perfusion.mat'
+        case 'perfusion_mat'
             path = [inputpath 'perfusion.mat']
         case 'density_mat'
             path = [stage2path 'density.mat'];
