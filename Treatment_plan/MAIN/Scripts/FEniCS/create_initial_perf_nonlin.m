@@ -51,7 +51,7 @@ elseif startsWith(modelType, 'child')
 end
 
 perf_mat=initial_perf_mat;
-save(get_path('initial_perf_mat'), 'perf_mat', '-v7.3');
-save([datapath 'perfusion_current.mat'], 'perf_mat', '-v7.3')
+save([datapath 'initial_perf_mat'], 'perf_mat', '-v7.3');
+save([datapath 'perfusion_current.mat'], 'perf_mat', '-v7.3');
 
 end
