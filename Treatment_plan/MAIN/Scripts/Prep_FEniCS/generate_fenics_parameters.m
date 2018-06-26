@@ -156,9 +156,9 @@ if ~all([exist_thermal, exist_perfusion_heatcap, exist_PLD, exist_density, exist
     if ~exist_density
         finalize('density_mat', nearest_points, modelType);
     end
-    %if ~exist_perfusion
-     %   finalize('perfusion.mat', nearest_points, modelType);
-    %end
+    if ~exist_perfusion
+        finalize('perfusion.mat', nearest_points, modelType);
+    end
     if ~exist_heat_capacity
         finalize('heat_capacity_mat', nearest_points, modelType);
     end
@@ -192,6 +192,9 @@ fid = fopen([savepath 'modelType.txt'],'w');
 fprintf(fid, modelType);
 fclose(fid);
 
+% Save perfusion without extrapolation 
+save_perf_path=[savepath filesep 'perfusion_original.mat' ]
+save(save_perf_path, 'perfusion', '-v7.3')
 
 disp('Extrapolation done')
 disp('---------------------------')
