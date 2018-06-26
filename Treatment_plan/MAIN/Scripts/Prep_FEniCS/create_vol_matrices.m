@@ -3,8 +3,8 @@ function create_vol_matrices(overwriteOutput, tissue_mat, thermal_conductivity, 
 %   Creates and saves volumetric (non-boundary) parameter matrices. 
 %   Input: lists of material properties for each tissue index.
 
-    if nargin ~= 7
-            error('Needs five input arguments.')
+    if nargin ~= 8
+            error('Needs 8 input arguments.')
     end
 
     if ~exist(get_path('stage2'), 'dir')
