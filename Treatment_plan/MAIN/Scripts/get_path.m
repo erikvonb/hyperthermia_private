@@ -41,7 +41,7 @@ if nargin < 2
         case 'perfusion_heatcapacity_mat'
             path = [stage2path 'perfusion_heatcapacity.mat'];
         case 'perfusion_mat'
-            path = [inputpath 'perfusion.mat']
+            path = [inputpath 'perfusion.mat'];
         case 'density_mat'
             path = [stage2path 'density.mat'];
         case 'heat_capacity_mat'
