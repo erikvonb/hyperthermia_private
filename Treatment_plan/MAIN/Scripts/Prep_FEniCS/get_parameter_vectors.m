@@ -22,24 +22,29 @@ paramMat(end,:)= []; % Removes the last two rows
 strread(paramMat', '%s %d %f %f %f %f %f', 'whitespace', '\t');
 
 % Finds the index of blood
-if startsWith(modelType, 'duke')
+%if startsWith(modelType, 'duke')
 index_blood = strfind(name, 'BloodA');
 index_blood = find(not(cellfun('isempty', index_blood)));
-end
+%end
 
 % Multiplies the heat capacity and density of blood with the perfusion and
 % density of other materials
-if startsWith(modelType, 'duke')
+%if startsWith(modelType, 'duke')
 density=dens;
 heat_capacity=heat_cap;
-perf_cap = heat_cap(index_blood) .* perf .* dens .* dens(index_blood);
 perfusion=perf;
-modified_perf_cap = heat_cap(index_blood) .* modified_perf .* dens .* dens(index_blood);
+if startsWith(modelType, 'duke')
+    perf_cap = heat_cap(index_blood) .* perf .* dens .* dens(index_blood);
+    modified_perf_cap = heat_cap(index_blood) .* modified_perf .* dens .* dens(index_blood);
 elseif startsWith(modelType, 'child')
-    heat_capacty = 3617; %Use duke values to model blood perfusion since child does not have blood in model
-    density = 1040; % Use duke values...
-    perf_cap = heat_capacity .* perf .* density .* density;
-    perfusion=perf;
-    modified_perf_cap = heat_cap .* modified_perf .* density .* density;
+    perf_cap = 3617 .* perf .* dens .* 1040;
+    modified_perf_cap = 3617 .* modified_perf .* dens .* 1040; 
 end
-end
+%elseif startsWith(modelType, 'child')
+   % dens
+   % heat_capacity_const = 3617; %Use duke values to model blood perfusion since child does not have blood in model
+  %  density_const = 1040; % Use duke values...
+  %  perf_cap = heat_capacity .* perf .* density_const .* density_const;
+ %   perfusion=perf;
+%    modified_perf_cap = heat_cap_const .* modified_perf .* density_const .* density_const;
+%end
