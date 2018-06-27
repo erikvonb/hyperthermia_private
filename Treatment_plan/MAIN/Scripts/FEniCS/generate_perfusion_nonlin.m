@@ -1,4 +1,4 @@
-function perfusion_mat=generate_perfusion_nonlin(perf_mat, temp_mat)
+function perfusion_mat=generate_perfusion_nonlin()
 % ha bas W för första T beräkning, ta in nya T i matlab för att beräkna
 % nytt W och sen använda det för beräkna tredje T, repeat
 % spara W för varje temp-steg så det går läsa in i CompletePennes
@@ -19,6 +19,8 @@ modelType=fgetl(fid);
 % load current perfusion
 load([datapath 'perfusion_current.mat'])
 perfusion_mat=perf_mat;
+% load current temperature
+load([datapath 'temp_current.mat']);
 
 if startsWith(modelType, 'duke')
     index_muscle = 48;
