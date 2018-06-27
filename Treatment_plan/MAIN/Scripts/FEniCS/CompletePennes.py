@@ -5,7 +5,7 @@
  TODO: implement non-linear parameters for the perfusion.
     
 """
-
+import hdf5storage
 import h5py
 import matlab.engine
 eng = matlab.engine.start_matlab()
@@ -73,8 +73,8 @@ P1        = load_data("../Input_to_FEniCS/P.mat")
 
 T_b = Constant(0.0) # Blood temperature relative body temp
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
-#rho= load_data("../Input_to_FEniCS/density.mat")
-#c= load_data("../Input_to_FEniCS/heat_capacity.mat")
+rho= load_data("../Input_to_FEniCS/density.mat")
+c= load_data("../Input_to_FEniCS/heat_capacity.mat")
 
 # Load the w_c_b, depending on whether one wants to use linear perfusion data or non-linear perfusion data.
 w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
@@ -274,9 +274,10 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     # Perform the time calculations as in CoolPennes------------------------------------------
 
-    if non_linear_perfusion
-             engine.create_initial_perf_nonlin()
-             w= loadmat("../Input_to_FEniCS/initial_perf.mat")
+    if non_linear_perfusion:
+        eng.create_initial_perf_nonlin(nargout=0)
+
+    w=hdf5storage.loadmat('../Input_to_FEniCS/initial_perf_mat.mat')
 
     Time=1
     dt=0.1
@@ -296,22 +297,29 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         u_n=interpolate(u_IC,V)
 
     P=P*scale # Scale P according to previous calculations
-#F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
-    F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+    #F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
+    #F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
     #dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
     #alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
-    a=lhs(F)
-    L=rhs(F)
 
-    u=Function(V)
+
+
 
     # Now take steps in time and estimate the temperature for each time step, until the full scaling is made.
     t=0
     for n in range(int(numSteps)):
+        w=hdf5storage.loadmat('../Input_to_FEniCS/perfusion_current.mat')
+        
+        V = FunctionSpace(mesh, "CG", 1)
+        u = TrialFunction(V)
+        v = TestFunction(V)
         # Update time
         t += dt
         #u_IC.t=t
-        
+        F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+        a=lhs(F)
+        L=rhs(F)
+        u=Function(V)
         # Solve the system
         solve(a == L, u, solver_parameters={'linear_solver':'gmres'})   #might need to change from gmres to other solver?
         T =u.vector().array()
@@ -326,7 +334,7 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         
         # If okay temperature then save data for each time step in format readable by MATLAB
         #if (np.max(T)<Tmax and np.max(T)>Tmin):
-        if t==0.1:
+        if t==0.1: # this condition is just for testing
             Coords = mesh.coordinates()
             Cells  = mesh.cells()
             
@@ -345,19 +353,15 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
             f2.create_dataset(name='T',    data=Cells)
             # Need a dof(degree of freedom)-map to permutate Temp
             f2.create_dataset(name='Map',  data=dof_to_vertex_map(V))
-
+            f.close()
+            f2.close()
             print("saved T for step: ")
             print(index)
 
         # Estimate new matrix for perfusion if non_linear_perfusion=True
-        #if non_linear_perfusion
-        
-        temp=eng.convert_temp_matrix()
-        #eng.generate_perfusion_nonlin(w)
-
-        #if (np.max(T)<Tmax and np.max(T)>Tmin):
-        # f.close()
-        #f2.close()
+        if non_linear_perfusion:
+            eng.convert_temp_matrix()
+            eng.generate_perfusion_nonlin(nargout=0)
 
     print("Time iteration finished for plan " + str(i+1))
 
