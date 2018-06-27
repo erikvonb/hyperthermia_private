@@ -98,7 +98,7 @@ print("Done loading.")
 
 # Set parameters
 #-----------------------
-Tmax= 5 # 0 = 37C, 8 if head and neck, 5 if brain
+Tmax= 5.0 # 0 = 37C, 8 if head and neck, 5 if brain
 Tmin= 4.5 # 0 = 37C
 maxIter=180
 
@@ -279,7 +279,7 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     w=hdf5storage.loadmat('../Input_to_FEniCS/initial_perf_mat.mat')
 
-    Time=1
+    Time=10
     dt=0.1
     numSteps=Time/dt
     scale=scaleTot
@@ -316,7 +316,7 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         # Update time
         t += dt
         #u_IC.t=t
-        F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+        F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
         a=lhs(F)
         L=rhs(F)
         u=Function(V)
