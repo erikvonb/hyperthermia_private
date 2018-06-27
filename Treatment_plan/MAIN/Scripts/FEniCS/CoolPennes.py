@@ -22,7 +22,8 @@ from dolfin import *
 import numpy as np
 
 # This function calculates temperature from Pld. A loop is used to scale amplitudes, in order to make sure that the goal temperature is reached inside the tumor.
-#  Data needed: P-matrix, original amplitude settings in a text file, amplitude limit in a text file, bnd_heat_transfer.mat, bnd_temp_times_ht.mat, bnd_temp.mat, mesh.xml, perfusion_heatcapacity.mat, thermal_cond.mat and tumor_mesh.obj.
+#  Data needed: P-matrix, original amplitude settings in a text file, amplitude limit in a text file, bnd_heat_transfer.mat, bnd_temp_times_ht.mat, bnd_temp.mat,
+#  				mesh.xml, perfusion_heatcapacity.mat, thermal_cond.mat, heat_capacity.mat, density.mat and tumor_mesh.obj.
 #  Output(saved): scaled amplitude settings and temperature.h5 file for further calculations and plots in MATLAB. Temperaturefiles as .pvd and .vtu can be generated as well (for ParaView).
 
 
@@ -90,8 +91,8 @@ w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is 
 #w_c_b   = load_data("../Input_to_FEniCS/perfusion_heatcapacity_nonlinear.mat") # TODO This should be chosen if a non-linear scaling of the perfusion is wanted, not created yet though
 alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
-#c = load_data("../Input_to_FEniCS/.mat",0) #add correct paths
-#rho = load_data("../Input_to_FEniCS/.mat",0)
+c = load_data("../Input_to_FEniCS/heat_capacity.mat",0)
+rho = load_data("../Input_to_FEniCS/density.mat",0)
 
 print('Importing temperature matrixes...')
 with h5py.File("../FEniCS_results/temperature.h5",'r') as hdf:
@@ -104,8 +105,8 @@ with h5py.File("../FEniCS_results/temperature.h5",'r') as hdf:
 #-----------------------
 Tmax= 5 # 0 = 37C, 8 if head and neck, 5 if brain
 Tmin= 4.5 # 0 = 37C
-Time=1
-dt=0.1
+Time=500
+dt=50
 numSteps=Time/dt
 #-----------------------
 
@@ -147,7 +148,7 @@ u_IC= Expression("0", t=0, degree=0) # degree=1?
 u_n=interpolate(u_IC,V)
 
 P=P*scale # Scale P according to previous calculations
-F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
 #alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
 #alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
 a=lhs(F)
@@ -193,7 +194,4 @@ for n in range(int(numSteps)):
     """
 
 print('Finished')
-
-
-
 
