@@ -10,5 +10,5 @@ load([temppath filesep 'tissue_mat.mat'])
 % Find size
 [a,b,c] = size(tissue_Matrix);
 temp_mat = read_temperature(temp,1,1,1,a,b,c);
-%save('')
+save([current_dir filesep '..' filesep 'Input_to_FEniCS' filesep 'temp_current'], 'temp_mat', '-v7.3');
 end
