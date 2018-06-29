@@ -2,7 +2,6 @@
 
  This code combines Pennes.py with CoolPennes.py, i.e both scaling and time computations are performed.
  It is possible to combine plans, i.e to have a temperature matrix from an earlier P as initial condition to the next P. In order to combine different P they must be named P1, P2,.. etc and put in the folder  Input_to_FEniCS. If only one P is used, then just call it P, no index is needed.
- TODO: implement non-linear parameters for the perfusion.
     
 """
 import hdf5storage
@@ -214,10 +213,6 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
     # Save temperature matrix, amplitudes and scale factor
     if ((np.max(T)>Tmin and np.max(T)<Tmax and maxAmp<=ampLimit) or maxAmp==ampLimit):
         
-        # Plot solution and mesh
-        #plot(u)
-        #plot(mesh)
-        
         # Save data in a format readable by matlab
         Coords = mesh.coordinates()
         Cells  = mesh.cells()
@@ -277,9 +272,10 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
     if non_linear_perfusion:
         eng.create_initial_perf_nonlin(nargout=0)
 
-    w=hdf5storage.loadmat('../Input_to_FEniCS/initial_perf_mat.mat')
+    eng.update_input_to_fenics(nargout=0)
+    w=load_data('../Input_to_FEniCS/initial_perf.mat')
 
-    Time=10
+    Time=3.0
     dt=0.1
     numSteps=Time/dt
     scale=scaleTot
@@ -293,35 +289,33 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     if i==0:
         #Initial condition, should only be used for the first plan
-        u_IC= Expression("0", t=0, degree=0) # degree=1?
+        u_IC= Expression("0", t=0, degree=0)
         u_n=interpolate(u_IC,V)
 
     P=P*scale # Scale P according to previous calculations
-    #F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
-    #F=dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
-    #dt*alpha*u*v*ds + v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx - T_out_ht*v*ds
-    #alpha*u*v*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (u_n + dt*(P-w_c_b*u))*v*dx + T_out_ht*v*ds
-
-
-
 
     # Now take steps in time and estimate the temperature for each time step, until the full scaling is made.
     t=0
     for n in range(int(numSteps)):
-        w=hdf5storage.loadmat('../Input_to_FEniCS/perfusion_current.mat')
+        eng.update_input_to_fenics(nargout=0)
+        w=load_data('../Input_to_FEniCS/perfusion_current.mat')
         
         V = FunctionSpace(mesh, "CG", 1)
         u = TrialFunction(V)
         v = TestFunction(V)
         # Update time
         t += dt
-        #u_IC.t=t
-        F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+
+        if non_linear_perfusion:
+            c_b=Constant(3617.0)
+            F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - c*rho*u_n*v*dx + dt*P*v*dx-dt*w*u*v*dx - dt*T_out_ht*v*ds
+        if not non_linear_perfusion:
+            F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
         a=lhs(F)
         L=rhs(F)
         u=Function(V)
         # Solve the system
-        solve(a == L, u, solver_parameters={'linear_solver':'gmres'})   #might need to change from gmres to other solver?
+        solve(a == L, u, solver_parameters={'linear_solver':'gmres'})
         T =u.vector().array()
         
         
@@ -333,8 +327,8 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         u_n.assign(u)
         
         # If okay temperature then save data for each time step in format readable by MATLAB
-        #if (np.max(T)<Tmax and np.max(T)>Tmin):
-        if t==0.1: # this condition is just for testing
+        if (np.max(T)<Tmax and np.max(T)>Tmin):
+        #if t==0.1: # this condition is just for testing
             Coords = mesh.coordinates()
             Cells  = mesh.cells()
             

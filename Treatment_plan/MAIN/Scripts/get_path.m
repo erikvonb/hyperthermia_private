@@ -41,13 +41,13 @@ if nargin < 2
         case 'perfusion_heatcapacity_mat'
             path = [stage2path 'perfusion_heatcapacity.mat'];
         case 'perfusion_mat'
-            path = [inputpath 'perfusion.mat'];
+            path = [stage2path 'perfusion.mat'];
         case 'density_mat'
-            path = [inputpath 'density.mat'];
+            path = [stage2path 'density.mat'];
         case 'heat_capacity_mat'
-            path = [inputpath 'heat_capacity.mat'];
+            path = [stage2path 'heat_capacity.mat'];
         case 'initial_perf_mat'
-            path = [inputpath 'initial_perf.mat'];
+            path = [stage2path 'initial_perf.mat'];
     end
 elseif nargin==2
     % output
@@ -83,9 +83,11 @@ elseif nargin==2
         case 'xtrpol_density_mat'
             path = [resultpath 'density.mat'];
         case 'xtrpol_perfusion_mat'
-            path = [resultpath 'perfusion.mat']
+            path = [resultpath 'perfusion.mat'];
         case 'xtrpol_heat_capacity_mat'
             path = [resultpath 'heat_capacity.mat'];
+        case 'xtrpol_initial_perf_mat'
+            path = [resultpath 'initial_perf.mat']';
         case 'mesh'
             path = [resultpath 'mesh.xml'];
         case 'tumor_mesh'

@@ -24,6 +24,9 @@ modelType=fgetl(fid);
 load([datapath 'tissue_mat.mat']);
 tissue_mat=tissue_Matrix;
 
+addpath([current_dir filesep '..' filesep '..' filesep '..' filesep ]);
+addpath([datapath filesep '..' filesep 'Prep_FEniCS' filesep]);
+
 % Estimate perfusion according to model in report
 perf_muscle= 0.45+3.55*exp(-(T-45)^2/12);
 perf_fat= 0.36+0.36*exp(-(T-45)^2/12);
@@ -50,8 +53,38 @@ elseif startsWith(modelType, 'child')
     initial_perf_mat(index_tumor)=perf_tumor;  
 end
 
-perf_mat=initial_perf_mat;
-save([datapath 'initial_perf_mat'], 'perf_mat', '-v7.3');
-save([datapath 'perfusion_current.mat'], 'perf_mat', '-v7.3');
+%perf_mat=initial_perf_mat;
+
+if startsWith(modelType, 'duke') == 1
+    tumor_ind = 80;
+    muscle_ind = 48;
+    cerebellum_ind = 12;
+    water_ind = 81;
+    ext_air_ind = 1;
+    int_air_ind = 2;
+elseif startsWith(modelType,'child') == 1
+    tumor_ind = 9;
+    muscle_ind = 3;
+    cerebellum_ind = 8;
+    water_ind = 30;
+    ext_air_ind = 1;
+    int_air_ind = 5;
+end
+
+
+initial_perf_mat=initial_perf_mat(tissue_mat);
+addpath([current_dir filesep '..' filesep] )
+save(get_path('initial_perf_mat'), 'initial_perf_mat', '-v7.3');
+
+interior_mat = tissue_mat ~= water_ind & tissue_mat ~= ext_air_ind;
+[~,nearest_points] = Extrapolation.meijster(interior_mat);
+
+save([current_dir filesep '..' filesep 'Prep_FEniCS' filesep 'tmp' filesep 'Stage2' filesep 'initial_perf'], 'initial_perf_mat', '-v7.3');
+
+finalize('initial_perf_mat', nearest_points, modelType);
+%finalize('perfusion_mat', nearest_points, modelType);
+
+save([datapath 'initial_perf_mat_nonextrapolated'], 'initial_perf_mat', '-v7.3');
+%save([datapath 'perfusion_current.mat'], 'perf_mat', '-v7.3');
 
 end

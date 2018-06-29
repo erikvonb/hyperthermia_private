@@ -17,8 +17,33 @@ tissue_mat=tissue_Matrix;
 fid=fopen([datapath 'modelType.txt'], 'r');
 modelType=fgetl(fid);
 % load current perfusion
-load([datapath 'perfusion_current.mat'])
-perfusion_mat=perf_mat;
+load([datapath 'initial_perf_mat_nonextrapolated.mat']);
+if exist('perf_mat')
+    perfusion_mat=perf_mat;
+elseif exist('initial_perf_mat')
+    perfusion_mat=initial_perf_mat;
+else 
+    disp("Perfusion matrix not loaded correctly");
+end
+
+
+if startsWith(modelType, 'duke') == 1
+    tumor_ind = 80;
+    muscle_ind = 48;
+    cerebellum_ind = 12;
+    water_ind = 81;
+    ext_air_ind = 1;
+    int_air_ind = 2;
+elseif startsWith(modelType,'child') == 1
+    tumor_ind = 9;
+    muscle_ind = 3;
+    cerebellum_ind = 8;
+    water_ind = 30;
+    ext_air_ind = 1;
+    int_air_ind = 5;
+end
+
+    
 % load current temperature
 load([datapath 'temp_current.mat']);
 
@@ -81,8 +106,15 @@ perfusion_mat(index_fat_hot)=0.72;
 %-----------------------------------------------------
 
 perf_mat=perfusion_mat;
-savepath=  [datapath 'perfusion_current'];
-save(savepath, 'perf_mat', '-v7.3');
+addpath([current_dir filesep '..' filesep] )
+save(get_path('perfusion_mat'), 'perf_mat', '-v7.3');
+
+interior_mat = tissue_mat ~= water_ind & tissue_mat ~= ext_air_ind;
+[~,nearest_points] = Extrapolation.meijster(interior_mat);
+finalize('perfusion_mat', nearest_points, modelType);
+
+%savepath=  [datapath 'perfusion_current'];
+%save(savepath, 'perf_mat', '-v7.3');
 % borde man spara in m olika index så man kan kolla på dom senare?
 
 end
