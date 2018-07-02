@@ -31,7 +31,12 @@ function create_vol_matrices(overwriteOutput, tissue_mat, thermal_conductivity, 
         perfusion_mat=perfusion(tissue_mat);
         save(get_path('perfusion_mat'), 'perfusion_mat', '-v7.3');
     end
-        
+    
+    %if ~exist(get_path('initial_perf_mat'), 'var') || overwriteOutput
+    %    perfusion_mat=perfusion(tissue_mat);
+    %    save(get_path('initial_perf_mat'), 'initial_perf_mat', '-v7.3');
+    %end
+    
     if ~exist(get_path('perfusion_heatcapacity_mat'),'var') || overwriteOutput
         if endsWith(modelType, 'salt')
             perf_cap(82) = 0; % Satte samma som vatten??
