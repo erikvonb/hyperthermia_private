@@ -16,7 +16,7 @@ def load_data(filename, degree=0):
     
     # Load the .mat file
     f = h5py.File(filename, "r")
-    data = np.array(f.items()[0][1], dtype=float)
+    data = np.array(list(f.items())[0][1], dtype=float)
     f.close()
 
     # Load the intepolation c++ code
@@ -67,8 +67,8 @@ alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
 
 #-----------------------
-Tmax= 8 # 0 = 37C, 8 if head and neck, 5 if brain
-Tmin= 7.5 # 0 = 37C
+Tmax= 5 # 0 = 37C, 8 if head and neck, 5 if brain
+Tmin= 4.5 # 0 = 37C
 #scale= 1
 maxIter=180
 #-----------------------
@@ -107,7 +107,7 @@ while (((np.max(T)<Tmin or np.max(T)>Tmax) and nbrIter<=maxIter) or maxAmp>ampLi
     
     #If amplitude is too high, maxAmp is set to amlitude limit
     if (maxAmp>ampLimit):# and np.max(T)<Tmax):
-        print np.max(T)
+        print(np.max(T))
         scaleAmp=(ampLimit/maxAmp)**2
         maxAmp=ampLimit
         scaleTot=scaleTot*(scaleAmp)
@@ -123,10 +123,10 @@ while (((np.max(T)<Tmin or np.max(T)>Tmax) and nbrIter<=maxIter) or maxAmp>ampLi
         u = Function(V)
         solve(a == L, u, solver_parameters={'linear_solver':'gmres'}) #gmres is fast
         T =u.vector().array()
-        print "Tmax:"
-        print np.max(T)
-        print "Scale:"
-        print scaleTot
+        print("Tmax:")
+        print(np.max(T))
+        print("Scale:")
+        print(scaleTot)
         if (np.max(T)<Tmax):
             done = True # exit loop
     
@@ -172,12 +172,12 @@ while (((np.max(T)<Tmin or np.max(T)>Tmax) and nbrIter<=maxIter) or maxAmp>ampLi
         T =u.vector().array()
 
     nbrIter=nbrIter+1
-    print "Tmax:"
-    print np.max(T)
-    print "Scale:"
-    print scaleTot
-    print "MaxAmp:"
-    print maxAmp
+    print("Tmax:")
+    print(np.max(T))
+    print("Scale:")
+    print(scaleTot)
+    print("MaxAmp:")
+    print(maxAmp)
 
     if(done):
         break
@@ -224,18 +224,18 @@ if ((np.max(T)>Tmin and np.max(T)<Tmax and maxAmp<=ampLimit) or maxAmp==ampLimit
     fileScale.close()
 
     #Print parameters
-    print "Tmax:"
-    print np.max(T)
-    print "Scale:"
-    print scaleTot
-    print "Nbr of iterations:"
-    print nbrIter
-    print "MaxAmp:"
-    print maxAmp
+    print("Tmax:")
+    print(np.max(T))
+    print("Scale:")
+    print(scaleTot)
+    print("Nbr of iterations:")
+    print(nbrIter)
+    print("MaxAmp:")
+    print(maxAmp)
 
     if (np.max(T)>Tmax and ampLimit==maxAmp):
-        print " High temperature. Try to increase the interval [Tmin,Tmax] or try a higher maxIter."
+        print(" High temperature. Try to increase the interval [Tmin,Tmax] or try a higher maxIter.")
 
 else:
-   print "Not enough iterations"
+   print("Not enough iterations")
 
