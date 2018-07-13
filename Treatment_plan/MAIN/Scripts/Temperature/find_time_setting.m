@@ -23,10 +23,9 @@ filename = which('evaluate_temp');
 [temperaturepath,~,~] = fileparts(filename);
 datapath = [temperaturepath filesep '..' filesep '..' filesep 'Data'];
 scriptpath = [temperaturepath filesep '..'];
-%resultpath = [temperaturepath filesep '..' filesep '..' filesep 'Results' filesep 'time_setting'];
-
 addpath(scriptpath)
 
+% load tissue_mat
 tissue_mat = Extrapolation.load([datapath filesep 'tissue_mat_' modelType '.mat']);
 [a,b,c] = size(tissue_mat);
 
