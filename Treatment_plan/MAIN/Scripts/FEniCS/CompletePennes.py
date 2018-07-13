@@ -1,7 +1,8 @@
 """
 
  This code combines Pennes.py with CoolPennes.py, i.e both scaling and time computations are performed.
- It is possible to combine plans, i.e to have a temperature matrix from an earlier P as initial condition to the next P. In order to combine different P they must be named P1, P2,.. etc and put in the folder  Input_to_FEniCS. If only one P is used, then just call it P, no index is needed.
+ It is possible to combine plans, i.e to have a temperature matrix from an earlier P as initial condition to the next P. In order to combine different P they must be named P1, P2,.. etc and put in the folder  Input_to_FEniCS. If only one P is used, then just call it P, no index is needed. Hence, temperature estimations can be made for a combination of plans.
+ It is also possible to choose non-linear perfusion and to change the temperature of the water in the bolus.
     
 """
 import hdf5storage
@@ -17,6 +18,8 @@ import numpy as np
 # Define if you want to use the non-linear model(=True) of perfusion or constant values(=False)
 non_linear_perfusion=True
 
+# Set the temperature of the waterbolus (first input to change_water_bolus)
+eng.change_water_bolus_temp(-22.0, nargout=0)
 
 # Load .mat parameter
 # The optional input argument 'degree' is FEniCS internal interpolation type.
@@ -66,7 +69,7 @@ mesh = Mesh('../Input_to_FEniCS/mesh.xml')
 
 print('Importing material properties...')
 # Load P matrices, either just one or several depending on how many HT plans one wants to combine.
-P1        = load_data("../Input_to_FEniCS/P.mat")
+P        = load_data("../Input_to_FEniCS/P.mat")
 #P2        = load_data("../Input_to_FEniCS/P1.mat") # add additional plans if wanted
 #P3        = load_data("../Input_to_FEniCS/P3.mat")
 
@@ -74,10 +77,7 @@ T_b = Constant(0.0) # Blood temperature relative body temp
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
 rho= load_data("../Input_to_FEniCS/density.mat")
 c= load_data("../Input_to_FEniCS/heat_capacity.mat")
-
-# Load the w_c_b, depending on whether one wants to use linear perfusion data or non-linear perfusion data.
 w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
-#w_c_b   = load_data("../Input_to_FEniCS/perfusion_heatcapacity_nonlinear.mat") # TODO This should be chosen if a non-linear scaling of the perfusion is wanted, not created yet though
 alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
 
@@ -94,6 +94,12 @@ with open("../Input_to_FEniCS/ampLimit.txt") as file:
         ampLimit.append(line.rstrip().split(","))
 
 print("Done loading.")
+
+# If non-linerar perfusion i chosen an initial matrix of the perfusion must be made here
+if non_linear_perfusion:
+    eng.create_initial_perf_nonlin(nargout=0)
+# Move all files needed to correct folder
+eng.update_input_to_fenics(nargout=0)
 
 # Set parameters
 #-----------------------
@@ -126,11 +132,13 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
     else:
         P= load_data("../Input_to_FEniCS/P" + str(i) + ".mat")
     
+    # Initiate variables and counters
     scaleTot=1;
     nbrIter=0;
     T=0
     done=False
 
+    # Do the scaling iteratively
     while (((np.max(T)<Tmin or np.max(T)>Tmax) and nbrIter<=maxIter) or maxAmp>ampLimit):
     
         #If amplitude is too high, maxAmp is set to amlitude limit
@@ -261,22 +269,21 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
 
     #-----------------------------------------------------------------------------------------
     # Reset variables
-    del v, T, P, V
-    if numberOfP==1:
-        P = load_data("../Input_to_FEniCS/P.mat")
-    else:
-        P= load_data("../Input_to_FEniCS/P" + str(i) + ".mat")
+    del v, T, V, u
 
-    # Perform the time calculations as in CoolPennes------------------------------------------
+    # Perform the temperature calculations as in CoolPennes------------------------------------------
 
+    # Create initial matrix of the non-linear perfusion
     if non_linear_perfusion:
-        eng.create_initial_perf_nonlin(nargout=0)
-
+            eng.create_initial_perf_nonlin(nargout=0)
+    # move files
     eng.update_input_to_fenics(nargout=0)
-    w=load_data('../Input_to_FEniCS/initial_perf.mat')
+    if non_linear_perfusion:
+            w=load_data('../Input_to_FEniCS/initial_perf.mat')
 
-    Time=3.0
-    dt=0.1
+    # Set time Time and timestep dt
+    Time=10
+    dt=1
     numSteps=Time/dt
     scale=scaleTot
     print("Scale is:")
@@ -292,25 +299,31 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         u_IC= Expression("0", t=0, degree=0)
         u_n=interpolate(u_IC,V)
 
-    P=P*scale # Scale P according to previous calculations
-
     # Now take steps in time and estimate the temperature for each time step, until the full scaling is made.
     t=0
+    stepnr=1
     for n in range(int(numSteps)):
         eng.update_input_to_fenics(nargout=0)
-        w=load_data('../Input_to_FEniCS/perfusion_current.mat')
+        # Load current perfusion if perfusion is not constant
+        if non_linear_perfusion:
+            w=load_data('../Input_to_FEniCS/perfusion_current.mat')
         
+        # Definitions needed for the variational form
         V = FunctionSpace(mesh, "CG", 1)
         u = TrialFunction(V)
         v = TestFunction(V)
         # Update time
         t += dt
-
+        
+        # Define a variational formulation
         if non_linear_perfusion:
-            c_b=Constant(3617.0)
-            F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - c*rho*u_n*v*dx + dt*P*v*dx-dt*w*u*v*dx - dt*T_out_ht*v*ds
+            # c_b is heat capacity for blood times blood density, otherwise included in w_c_b
+            c_b=Constant(3617.0*1040.0)
+            F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-c_b*w*u))*v*dx - dt*T_out_ht*v*ds
         if not non_linear_perfusion:
             F=dt*alpha*u*v*ds + c*rho*v*u*dx + dt*k_tis*dot(grad(u), grad(v))*dx - (c*rho*u_n + dt*(P-w_c_b*u))*v*dx - dt*T_out_ht*v*ds
+        
+        #Set equation in the right form for the solver
         a=lhs(F)
         L=rhs(F)
         u=Function(V)
@@ -320,15 +333,18 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
         
         
         # Print the highest temperature
-        print("Tmax for time step number " + str(int(t/dt)) + ":")
+        print("Tmax for time step number " + str(stepnr) + ":")
         print(np.max(T))
-        print(np.min(T))
-        
+        #print("Tmean for time step nr " + str(stepnr))
+        #print(np.mean(T))
+        #print(np.min(T))
+
+        stepnr= stepnr+1
+        # Assign current temperature to u_n
         u_n.assign(u)
         
         # If okay temperature then save data for each time step in format readable by MATLAB
         if (np.max(T)<Tmax and np.max(T)>Tmin):
-        #if t==0.1: # this condition is just for testing
             Coords = mesh.coordinates()
             Cells  = mesh.cells()
             
@@ -341,21 +357,21 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
             # Need a dof(degree of freedom)-map to permutate Temp
             f.create_dataset(name='Map',  data=dof_to_vertex_map(V))
             
-            f2 = h5py.File('../FEniCS_results/temperature_temporary.h5','w')
-            f2.create_dataset(name='Temp', data=T)
-            f2.create_dataset(name='P',    data=Coords)
-            f2.create_dataset(name='T',    data=Cells)
-            # Need a dof(degree of freedom)-map to permutate Temp
-            f2.create_dataset(name='Map',  data=dof_to_vertex_map(V))
-            f.close()
-            f2.close()
-            print("saved T for step: ")
-            print(index)
+        f2 = h5py.File('../FEniCS_results/temperature_temporary.h5','w')
+        f2.create_dataset(name='Temp', data=T)
+        f2.create_dataset(name='P',    data=Coords)
+        f2.create_dataset(name='T',    data=Cells)
+        # Need a dof(degree of freedom)-map to permutate Temp
+        f2.create_dataset(name='Map',  data=dof_to_vertex_map(V))
+        f.close()
+        f2.close()
+        print("saved temporary T for step: ")
+        print(str(stepnr-1))
 
         # Estimate new matrix for perfusion if non_linear_perfusion=True
         if non_linear_perfusion:
-            eng.convert_temp_matrix()
-            eng.generate_perfusion_nonlin(nargout=0)
+          eng.convert_temp_matrix()
+          eng.generate_perfusion_nonlin(nargout=0)
 
     print("Time iteration finished for plan " + str(i+1))
 
