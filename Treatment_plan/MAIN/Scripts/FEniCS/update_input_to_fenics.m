@@ -1,12 +1,14 @@
 function update_input_to_fenics()
-
+% Moves files needed for CompletePennes to the correct folder
 
 current_dir=pwd;
+% define where you want the files
 to_path=[current_dir filesep '..' filesep 'Input_to_FEniCS' filesep];
 % Load modelType
 fid=fopen([to_path 'modelType.txt'], 'r');
 modelType=fgetl(fid);
 
+% define where the files are at the moment
 from_path=[current_dir filesep '..' filesep '..' filesep 'Results' filesep 'Input_to_FEniCS' filesep modelType filesep];
 
 % move perfusion matrix
