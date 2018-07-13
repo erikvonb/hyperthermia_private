@@ -44,7 +44,7 @@ bnd_temp=temperature(new_temp);
 % Mark the skin surface boundary with body/air/water
 [surface_inner, surface_outer] = fetch_surface(tissue_mat, water_ind);
 
-% Create new boundary matrices
+% Create and save new boundary matrices
 bnd_heat_trans_mat = bnd_heat_trans(surface_inner);
 bnd_temp_mat =  bnd_temp(surface_outer);
 bnd_temp_times_ht_mat = bnd_heat_trans_mat .* bnd_temp_mat;
