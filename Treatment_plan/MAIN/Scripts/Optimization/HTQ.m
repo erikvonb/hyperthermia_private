@@ -19,7 +19,8 @@ if isa(healthy_tissue, 'Yggdrasil.Octree')
     healthy_tissue = healthy_tissue.to_mat();
 end
 %ÄNDRAT - TILLAGT
-load 'tissue_mat_child';
+%load 'tissue_mat_child';
+load 'C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Data\tissue_mat_child'
 tissue_mat=data;
 water_ind = 30;
     ext_air_ind = 1;

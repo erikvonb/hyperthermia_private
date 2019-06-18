@@ -15,6 +15,7 @@ filename = which('Main');
 
 cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
+addpath([mainpath filesep 'Scripts'])
 
 [modelType,nbrEfields,PwrLimit,goal_function,iteration,hstreshold,SavePath1,particle_settings,freq] = InputData;
 hyp_compile

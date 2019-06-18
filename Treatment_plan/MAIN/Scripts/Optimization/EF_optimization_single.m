@@ -1,5 +1,5 @@
 function [] = EF_optimization_single(freq, nbrEfields, modelType, ...
-    goal_function, particle_settings)
+    goal_function, particle_settings, hstreshold, iteration, SavePath)
 %[P] = EF_OPTIMIZATION()
 %   Calculates a optimization of E-fields for one frequency to maximize 
 %   power in tumor while minimizing hotspots. The resulting power loss 

@@ -9,6 +9,7 @@ filename = which('Main');
 
 cd(mainpath)
 cd Results
+cd T_and_final_settings
 %Load the generated temperature matrix
 load 'temp_child_450MHz'
 Tempmatrix=mat;

@@ -32,7 +32,7 @@ paramMat = caseread(parampath);
 paramMat(end-1:end,:)= []; % Removes the last two rows
 
 % Creates two columns containing index and sigma values
-[~, index, ~, ~, sigma, ~] = strread(paramMat', '%s %d %f %d %f %f',...
+[~, index, ~, ~, sigma, ~] = strread(paramMat', '%s %d %f %f %f %f',...
     'whitespace', '\t');
 % Convert sigma to sigma_mat, corresponding to tissue_mat
 index_to_row = zeros(max(index),1);

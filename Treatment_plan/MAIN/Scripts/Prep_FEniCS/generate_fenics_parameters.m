@@ -188,7 +188,7 @@ end
 
 % Save modelType in .txt file (needed for nonlinear perfusion)
 current=pwd;
-savepath= [current filesep '..' filesep 'Input_to_FEniCS' filesep  ];
+savepath= [current filesep 'Scripts' filesep 'Input_to_FEniCS' filesep];
 fid = fopen([savepath 'modelType.txt'],'w');
 fprintf(fid, modelType);
 fclose(fid);
