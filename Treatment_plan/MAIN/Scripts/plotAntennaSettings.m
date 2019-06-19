@@ -1,10 +1,6 @@
 function plotAntennaSettings(settings_file_path, plotfilename)
 
-% filepath = 'C:\Users\Erik\Documents\hyperthermia_repo\settings_testmod_420MHz.txt';
-settings_file_path = 'C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Results\T_and_final_settings\settings_child_450MHz.txt';
-% settings_file_path = 'C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Results\P_and_unscaled_settings\settings_duke_400500MHz.txt';
 figures = [];
-freqs = [];
 % Read settings file and extract amplitudes/phases
 f = readmatrix(settings_file_path);
 % If more than one frequency was used in the optimization
