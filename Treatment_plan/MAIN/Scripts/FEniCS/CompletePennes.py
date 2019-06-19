@@ -1,7 +1,10 @@
 """
 
  This code combines Pennes.py with CoolPennes.py, i.e both scaling and time computations are performed.
- It is possible to combine plans, i.e to have a temperature matrix from an earlier P as initial condition to the next P. In order to combine different P they must be named P1, P2,.. etc and put in the folder  Input_to_FEniCS. If only one P is used, then just call it P, no index is needed. Hence, temperature estimations can be made for a combination of plans.
+ It is possible to combine plans, i.e to have a temperature matrix from an earlier P as initial condition
+ to the next P. In order to combine different P they must be named P1, P2,.. etc and put in the folder
+ Input_to_FEniCS. If only one P is used, then just call it P, no index is needed. Hence, temperature
+ estimations can be made for a combination of plans.
  It is also possible to choose non-linear perfusion and to change the temperature of the water in the bolus.
     
 """
@@ -75,8 +78,8 @@ P        = load_data("../Input_to_FEniCS/P.mat")
 
 T_b = Constant(0.0) # Blood temperature relative body temp
 k_tis    = load_data("../Input_to_FEniCS/thermal_cond.mat")
-rho= load_data("../Input_to_FEniCS/density.mat")
-c= load_data("../Input_to_FEniCS/heat_capacity.mat")
+rho      = load_data("../Input_to_FEniCS/density.mat")
+c        = load_data("../Input_to_FEniCS/heat_capacity.mat")
 w_c_b    = load_data("../Input_to_FEniCS/perfusion_heatcapacity.mat") # This is the "standard" perfusion matrix with linear values
 alpha    = load_data("../Input_to_FEniCS/bnd_heat_transfer.mat", 0)
 T_out_ht = load_data("../Input_to_FEniCS/bnd_temp_times_ht.mat", 0)
@@ -95,7 +98,7 @@ with open("../Input_to_FEniCS/ampLimit.txt") as file:
 
 print("Done loading.")
 
-# If non-linerar perfusion i chosen an initial matrix of the perfusion must be made here
+# If non-linerar perfusion is chosen an initial matrix of the perfusion must be made here
 if non_linear_perfusion:
     eng.create_initial_perf_nonlin(nargout=0)
 # Move all files needed to correct folder
@@ -103,17 +106,17 @@ eng.update_input_to_fenics(nargout=0)
 
 # Set parameters
 #-----------------------
-Tmax= 5.0 # 0 = 37C, 8 if head and neck, 5 if brain
-Tmin= 4.5 # 0 = 37C
-maxIter=180
+Tmax = 5.0 # 0 = 37C, 8 if head and neck, 5 if brain
+Tmin = 4.5 # 0 = 37C
+maxIter = 180
 
 #Change type of data
-al=ampLimit[0][0]
-ampLimit=float(al)
-maxAmpl=max(amplitudes)
-maxAmp=maxAmpl[0][0]
-maxAmp=int(maxAmpl[0][0])
-maxAmp=float(maxAmp)
+al        = ampLimit[0][0]
+ampLimit  = float(al)
+maxAmpl   = max(amplitudes)
+maxAmp    = maxAmpl[0][0]
+maxAmp    = int(maxAmpl[0][0])
+maxAmp    = float(maxAmp)
 
 # Define function space and test/trial functions needed for the variational formulation
 V = FunctionSpace(mesh, "CG", 1)
@@ -130,7 +133,7 @@ for i in range(numberOfP): # Outer loop for each HT plan one wants to include
     if numberOfP==1:
         P = load_data("../Input_to_FEniCS/P.mat")
     else:
-        P= load_data("../Input_to_FEniCS/P" + str(i) + ".mat")
+        P = load_data("../Input_to_FEniCS/P" + str(i) + ".mat")
     
     # Initiate variables and counters
     scaleTot=1;
