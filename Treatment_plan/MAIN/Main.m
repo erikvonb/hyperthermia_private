@@ -17,7 +17,7 @@ cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
 addpath([mainpath filesep 'Scripts'])
 
-[modelType,nbrEfields,PwrLimit,goal_function,iteration,hstreshold,SavePath1,particle_settings,freq] = InputData;
+[modelType,nbrEfields,PwrLimit,goal_function,iteration,hsthreshold,SavePath1,particle_settings,freq] = InputData;
 hyp_compile
 hyp_init
 
@@ -26,17 +26,17 @@ hyp_init
 fclose('all');
 save ('iteration','iteration');
 cd(mainpath);
-directorymaker(hstreshold, iteration, freq, modelType, SavePath1);
-SavePath=[SavePath1 filesep 'HTPData' filesep num2str(hstreshold),'_degree_',modelType, num2str(freq),'MHz',num2str(iteration)]
+directorymaker(hsthreshold, iteration, freq, modelType, SavePath1);
+SavePath = [SavePath1 filesep 'HTPData' filesep num2str(hsthreshold),'_degree_',modelType, num2str(freq),'MHz',num2str(iteration)];
 %Färdigändrat
-if length(freq) ==1 
-    EF_optimization_single(freq, nbrEfields, modelType, goal_function, particle_settings,hstreshold, iteration, SavePath)
-elseif length(freq) ==2
-    EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings)
-elseif length(freq) >2
+if length(freq) == 1 
+    EF_optimization_single(freq, nbrEfields, modelType, goal_function, particle_settings, iteration)
+elseif length(freq) == 2
+    freq_opt = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings);
+elseif length(freq) > 2
     error('Optimization does not currently work for more than two frequencies. Prehaps combine_single can be of use?')
 end
-    
+
 %% Generate FEniCS Parameters
 fclose('all');
 cd Results\Input_to_FEniCS\child;
@@ -50,20 +50,19 @@ fenicspath = [mainpath filesep 'Scripts' filesep 'Prep_FEniCS'];
 preppath = [fenicspath filesep 'Mesh_generation'];
 addpath(isopath, fenicspath, preppath) 
 
-generate_fenics_parameters(modelType, freq, true)
-generate_amp_files(modelType, freq, nbrEfields, PwrLimit)
+generate_fenics_parameters(modelType, freq_opt, true)
+generate_amp_files(modelType, freq_opt, nbrEfields, PwrLimit)
 cd(olddir)
 
 %% Temperature
 temppath = [mainpath filesep 'Scripts' filesep 'Temperature'];
 addpath(temppath);
-evaluate_temp(modelType, freq, true, hstreshold, iteration);
+evaluate_temp(modelType, freq, true, hsthreshold, iteration);
 save_scaled_settings(modelType, freq, nbrEfields);
 disp('Finished, storing temperature files and settings...')
-HotSpotExtractor_child(hstreshold, iteration, freq);
+HotSpotExtractor_child(hsthreshold, iteration, freq);
 copyfile('Results', SavePath, 'f');
 
-   
 message4 = msgbox('You have now finished the optimization and temperature transformation. You rock!', 'Hot stuff!');
 u = timer('ExecutionMode', 'singleShot', 'StartDelay',5,'TimerFcn',@(~,~)close(message4));
 start(u);
@@ -72,7 +71,7 @@ GoodJob = [LocateLeo filesep 'Leonardo-DiCaprio-Clap.gif'];
 fig = figure;
 gifplayer(GoodJob,0.1);
 r = timer('ExecutionMode', 'singleShot', 'StartDelay',1.5,'TimerFcn',@(~,~)close(fig));
-start(r);0
+start(r);
 cd(olddir)
-iteration=iteration+1
+iteration=iteration+1;
 fclose('all');

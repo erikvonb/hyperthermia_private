@@ -14,7 +14,7 @@ prompt = {'Model type:',...
     'Frequency(ies), MHz, one per row:'};
 title = 'Inputs';
 num_lines = [1,1,1,1,1,1,1,1,1,1,5];
-defaultans = {'child','14','100','M1-M1','1','2.0','C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Data','2','1','1',['450']};
+defaultans = {'duke','16','100','M1-M1','1','2.0','C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Data','2','1','1',['400']};
 options.Resize = 'on';
 [input] = inputdlg(prompt,title,num_lines,defaultans,options);
 

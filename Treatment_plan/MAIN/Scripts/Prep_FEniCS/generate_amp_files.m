@@ -16,18 +16,18 @@ fileID1=fopen([resultpath 'amplitudes.txt'],'w');
 
 %enter data in amplitudes file
 if length(freq)==1
-parampath = [settingspath 'settings_' modelType '_' num2str(freq) 'MHz.txt'];
-paramMat = fopen(parampath);
-for i=1:nbrEfields
-    if i ==1
-    for j =1:2
-    fscanf(paramMat,'%s',1);
+    parampath = [settingspath 'settings_' modelType '_' num2str(freq) 'MHz.txt'];
+    paramMat = fopen(parampath);
+    for i=1:nbrEfields
+        if i ==1
+            for j =1:2
+                fscanf(paramMat,'%s',1);
+            end
+        end
+        amp{i} = fscanf(paramMat,'%s',1);
+        fscanf(paramMat,'%s',1);
+        fprintf(fileID1,'%f\r\n',str2num(amp{i}));
     end
-    end
-    amp{i} = fscanf(paramMat,'%s',1);
-    fscanf(paramMat,'%s',1);
-    fprintf(fileID1,'%f\r\n',str2num(amp{i}));
-end
 end
 
 %create ampLimit file and enter data

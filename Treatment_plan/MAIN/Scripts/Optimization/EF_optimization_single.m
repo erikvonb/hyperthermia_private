@@ -1,5 +1,5 @@
 function [] = EF_optimization_single(freq, nbrEfields, modelType, ...
-    goal_function, particle_settings, hstreshold, iteration, SavePath)
+    goal_function, particle_settings, iteration)
 %[P] = EF_OPTIMIZATION()
 %   Calculates a optimization of E-fields for one frequency to maximize 
 %   power in tumor while minimizing hotspots. The resulting power loss 
@@ -158,7 +158,7 @@ end
 disp(strcat('Post-optimization, HTQ = ',num2str(HTQ(p_opt,tumor_mat,healthy_tissue_mat))))
 
 mat_1 = p_opt.to_mat;
-[htq, PLDmaxTum, meanPLDnorm, TC] = getHTQ(tissue_mat, mat_1, modelType);
+% [htq, PLDmaxTum, meanPLDnorm, TC] = getHTQ(tissue_mat, mat_1, modelType);
 
 wave_opt = e_tot_opt.C.values; % Complex settings
 ant_opt = e_tot_opt.C.keys; % Corresponding antennas

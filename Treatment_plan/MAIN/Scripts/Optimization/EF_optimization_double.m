@@ -1,4 +1,4 @@
-function [] = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings)
+function freq_opt = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings)
 %[P] = EF_OPTIMIZATION()
 %   Calculates an optimization of E-fields for two frequencies to maximize
 %   power in tumor while minimizing hotspots. All frequency combinations
@@ -17,7 +17,10 @@ function [] = EF_optimization_double(freq, nbrEfields, modelType, goal_function,
 %                    will optimize over M2.
 % particle_settings: vector with [swarmsize, max_iterations, stall_iterations]
 %                    for particleswarm.
-%-------------------------------------------------------------------------
+%------OUTPUT----------------------------------------------------------
+% freq_opt:          the optimal pair of frequencies - one of f1-f2, f2-f2,
+%                    f2-f1, f1-f1.
+%----------------------------------------------------------------------
 tic
 % Ensure Yggdrasil is available
 if strcmp(which('Yggdrasil.Octree'), '')
@@ -232,7 +235,7 @@ Pha=zeros(length(wave_opt),1);
 
 for i=1:length(wave_opt)
     Amp(i) = abs(wave_opt(i));
-    Pha(i) = rad2deg(phase(wave_opt(i)));
+    Pha(i) = rad2deg(angle(wave_opt(i)));
 end
 
 settings_1 = [Amp Pha ant_opt']; %For first frequency
@@ -244,7 +247,7 @@ ant_opt = e_opt_2.C.keys;
 
 for i=1:length(wave_opt)
     Amp(i) = abs(wave_opt(i));
-    Pha(i) = phase(wave_opt(i));
+    Pha(i) = angle(wave_opt(i));
 end
 
 settings_2 = [Amp Pha ant_opt']; %For second frequency

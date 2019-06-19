@@ -1,4 +1,4 @@
-function q = HTQ(P, tumor_tissue,healthy_tissue)
+function q = HTQ(P, tumor_tissue, healthy_tissue)
 % Calculates HTQ for a PLD field in either mat- or oct-form. 
 % ------INPUTS----------------------------------------------
 % P:              mat or oct PLD field
@@ -18,19 +18,7 @@ end
 if isa(healthy_tissue, 'Yggdrasil.Octree')
     healthy_tissue = healthy_tissue.to_mat();
 end
-%ÄNDRAT - TILLAGT
-%load 'tissue_mat_child';
-load 'C:\Users\Erik\Documents\hyperthermia_repo\Treatment_plan\MAIN\Data\tissue_mat_child'
-tissue_mat=data;
-water_ind = 30;
-    ext_air_ind = 1;
-    int_air_ind = 5;
-    tumor_ind = 9;
-healthy_tissue = tissue_mat~=water_ind & ...
-    tissue_mat~=ext_air_ind & ...
-    tissue_mat~=tumor_ind & ...
-    tissue_mat~=int_air_ind;% & ...
-healthy_tissue;
+
 %FÄRDIGÄNDRAT - TILLAGT
 tumor_tissue = logical(tumor_tissue);
 healthy_tissue = logical(healthy_tissue);
