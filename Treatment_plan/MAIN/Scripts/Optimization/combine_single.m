@@ -40,7 +40,10 @@ e_vec=cell(1,n);
 
 for i=1:n
     f=freq(i);
-    eFieldName=['E_' modelType '_' num2str(freq) 'MHz.oct'];
+    % ----------------------------------------------
+    % Borde byta ut freq nedan mot f?
+    % ----------------------------------------------
+    eFieldName=['E_' modelType '_' num2str(f) 'MHz.oct'];
     e_vec{i}=Yggdrasil.Utils.load([resultpath filesep eFieldName]);
 end
 
@@ -77,7 +80,7 @@ for i=settingIndex
     ant_opt = e_vec{i}.C.keys; %Corresponding antennas
     for j=1:length(wave_opt)
         Amp(j) = abs(wave_opt(j));
-        Pha(j) = rad2deg(phase(wave_opt(j)));
+        Pha(j) = rad2deg(angle(wave_opt(j)));
     end
     settings = [Amp Pha ant_opt']; 
     settings = sortrows(settings,3);
@@ -93,10 +96,10 @@ save([resultpath filesep 'P_combineSingle_' modelType '_' freqvec 'MHz.mat'], 'm
     
 end
 
-    function [e_tot] = add_eField(x,eFields,n)
-        % weight eFields with x and add all n fields.
-        e_tot = Yggdrasil.Math.weight(eFields{1},x(1));
-        for i=2:n
-            e_tot = e_tot + Yggdrasil.Math.weight(eFields{i},x(i));
-        end
+function [e_tot] = add_eField(x,eFields,n)
+    % weight eFields with x and add all n fields.
+    e_tot = Yggdrasil.Math.weight(eFields{1},x(1));
+    for i=2:n
+        e_tot = e_tot + Yggdrasil.Math.weight(eFields{i},x(i));
     end
+end
