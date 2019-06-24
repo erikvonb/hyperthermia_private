@@ -38,42 +38,42 @@ for i = 1:n
 end   
 
 largest = 0;
-    for i = 1:n
-        largest = max([largest, abs(coeff(realZ,imagZ,i))]);
-    end
-    
-    KEYS = realZ.keys;
-    for i = 1:length(KEYS)
-        k = KEYS{i};
-        realZ(k) = realZ(k)/largest;
-    end
-    KEYS = imagZ.keys;
-    for i = 1:length(KEYS)
-        k = KEYS{i};
-        imagZ(k) = imagZ(k)/largest;
-    end
-    
-    % Apply coefficients
-    E_opt = cell(length(Efield_objects),1);
-    for i = 1:length(Efield_objects)
-        E_opt{i} = coeff(realZ,imagZ,i)*Efield_objects{i};
-    end
+for i = 1:n
+    largest = max([largest, abs(coeff(realZ,imagZ,i))]);
+end
 
-    % Calculate total Efield
-    E_opt_sum = E_opt{1};
-    for i=2:length(Efield_objects)
-        E_opt_sum = E_opt_sum + E_opt{i};
-    end
-    
-    % Calculate value of eval_function
-    switch eval_function
-        case 'M1'
-            y_val = M1(abs_sq(E_opt_sum),tumor,healthy_tissue);
-        case 'M2'
-            y_val = M2(abs_sq(E_opt_sum),tumor,healthy_tissue);
-        case 'HTQ'
-            y_val = HTQ(abs_sq(E_opt_sum),tumor,healthy_tissue);
-    end
+KEYS = realZ.keys;
+for i = 1:length(KEYS)
+    k = KEYS{i};
+    realZ(k) = realZ(k)/largest;
+end
+KEYS = imagZ.keys;
+for i = 1:length(KEYS)
+    k = KEYS{i};
+    imagZ(k) = imagZ(k)/largest;
+end
+
+% Apply coefficients
+E_opt = cell(length(Efield_objects),1);
+for i = 1:length(Efield_objects)
+    E_opt{i} = coeff(realZ,imagZ,i)*Efield_objects{i};
+end
+
+% Calculate total Efield
+E_opt_sum = E_opt{1};
+for i=2:length(Efield_objects)
+    E_opt_sum = E_opt_sum + E_opt{i};
+end
+
+% Calculate value of eval_function
+switch eval_function
+    case 'M1'
+        y_val = M1(abs_sq(E_opt_sum),tumor,healthy_tissue);
+    case 'M2'
+        y_val = M2(abs_sq(E_opt_sum),tumor,healthy_tissue);
+    case 'HTQ'
+        y_val = HTQ(abs_sq(E_opt_sum),tumor,healthy_tissue);
+end
 end
 
  function [Z] = coeff(reZ,imZ,id)
