@@ -78,7 +78,7 @@ for i = 1:n % pick first Efield
     end
 end
 
-[numer_realP, mapp1_real_to_Cpoly, mapp1_imag_to_Cpoly] = to_real(P_nom );
+[numer_realP, mapp1_real_to_Cpoly, mapp1_imag_to_Cpoly] = to_real(P_nom);
 [denom_realP, mapp2_real_to_Cpoly, mapp2_imag_to_Cpoly] = to_real(P_den);
 
 mapp_real_to_Cpoly = containers.Map('KeyType','int64','ValueType','int64');

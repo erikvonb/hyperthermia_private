@@ -15,3 +15,4 @@ Treatment_plan/MAIN/Scripts/Input_to_FEniCS/
 Treatment_plan/MAIN/Results/FEniCS_results/
 Treatment_plan/MAIN/Scripts/Prep_FEniCS/tmp/Stage2/perfusion.mat
 Treatment_plan/MAIN/Figures/
+Treatment_plan/MAIN/Logs/

@@ -158,7 +158,6 @@ end
 disp(strcat('Post-optimization, HTQ = ',num2str(HTQ(p_opt,tumor_mat,healthy_tissue_mat))))
 
 mat_1 = p_opt.to_mat;
-% [htq, PLDmaxTum, meanPLDnorm, TC] = getHTQ(tissue_mat, mat_1, modelType);
 
 wave_opt = e_tot_opt.C.values; % Complex settings
 ant_opt = e_tot_opt.C.keys; % Corresponding antennas

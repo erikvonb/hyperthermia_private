@@ -13,6 +13,11 @@ olddir = pwd;
 filename = which('Main');
 [mainpath,~,~] = fileparts(filename);
 
+c = clock;
+logpath = [mainpath filesep 'Logs'];
+logname = ['optimization_log_' num2str(c, '%d_%d_%d_%d_%d_%2.0f') '.txt'];
+diary([logpath filesep logname]);
+
 cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
 addpath([mainpath filesep 'Scripts'])
@@ -29,7 +34,7 @@ cd(mainpath);
 directorymaker(hsthreshold, iteration, freq, modelType, SavePath1);
 SavePath = [SavePath1 filesep 'HTPData' filesep num2str(hsthreshold),'_degree_',modelType, num2str(freq),'MHz',num2str(iteration)];
 %Färdigändrat
-if length(freq) == 1 
+if length(freq) == 1
     EF_optimization_single(freq, nbrEfields, modelType, goal_function, particle_settings, iteration)
 elseif length(freq) == 2
     freq_opt = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings);
@@ -39,8 +44,6 @@ end
 
 %% Generate FEniCS Parameters
 fclose('all');
-cd Results\Input_to_FEniCS\child;
-delete *.mat *.txt *.xml *.obj;
 cd(mainpath)
 message1 = msgbox('Optimization finished! Generating FEniCS parameters. ','Success');
 t = timer('ExecutionMode', 'singleShot', 'StartDelay',3,'TimerFcn',@(~,~)close(message1));
@@ -75,3 +78,4 @@ start(r);
 cd(olddir)
 iteration=iteration+1;
 fclose('all');
+diary off

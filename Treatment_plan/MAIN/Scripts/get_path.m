@@ -13,7 +13,7 @@ sourcepath = [scriptpath filesep '..' filesep 'Results' filesep 'P_and_unscaled_
 stage1path = [scriptpath filesep 'Prep_FEniCS' filesep 'tmp' filesep 'Stage1' filesep];
 stage2path = [scriptpath filesep 'Prep_FEniCS' filesep 'tmp' filesep 'Stage2' filesep];
 %Path to Input_to_FEniCS, under Scripts
-inputpath = [scriptpath filesep 'Input_to_FEniCS' filesep];
+% inputpath = [scriptpath filesep 'Input_to_FEniCS' filesep];
 
 if nargin < 2
     switch(lower(str))
