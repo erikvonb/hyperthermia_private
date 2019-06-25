@@ -1,32 +1,8 @@
-function [E_opt] = OptimizeM1(Efield_objects,weight_denom,weight_nom, ...
-    nbrEfields, particle_settings, eval_function, healthy_tissue)
-% Function that optimizes over goal function M1.
-% Optimization is done by expressing M1 as a polynomial and finding
-% complex amplitudes that gives the minimum value using particle swarm.
-%
-% ------INPUTS--------------------------------------------------------------
-% Efield_objects:    Cell vector with efields of one frequency in SF-Efield format
-%                    (length=number of antennas).
-% weight_denom:      weight in denomenator of M1. Default: matrix with
-%                    true/false for the position of the tumor, in octree format.
-% weight_nom:        weight in the nomenator of M1. Default: matrix with true/false
-%                    for the position of healthy tissue, in octree format.
-% nbrEfields:        the number of Efields that are put in to the optimization.
-% particle_settings: vector with [swarmsize, max_iterations, stall_iterations]
-%                    for particleswarm.
-% eval_function:     String with which function value to show in
-%                    particleSwarm. Options: 'M1', 'M2' or 'HTQ'.
-% healthy_tissue:    oct with 1 for healthy tissue, 0 otherwise.
-% ------OUTPUTS--------------------------------------------------------------
-% E_opt:             optimized Efield.
-% --------------------------------------------------------------------------
-
-if nargin==6
-    healthy_tissue=weight_nom;
-end
+function E_opt = OptimizeC(Efield_objects, weight_denom, weight_nom, ...
+    nbrEfields, particle_settings, eval_function, P1)
 
 % Cut off antennas with low power contribution in select_best
-Efield_objects = select_best(Efield_objects, nbrEfields, weight_denom, healthy_tissue);
+% Efield_objects = select_best(Efield_objects, nbrEfields, weight_denom, healthy_tissue);
 
 % Create the two square matrices for the gen. eigenvalue representation
 % of M1
@@ -122,20 +98,19 @@ end
 [mapp_realvar_to_fvar, mapp_fvar_to_realvar, n] ...
     = CPoly.real_to_fmap({numer_realP, denom_realP});
 
-% Express M1 as a function of X
-f = @(X)optimize_function(X,weight_denom, healthy_tissue,Efield_objects, ...
-    mapp_real_to_Cpoly,mapp_imag_to_Cpoly,mapp_fvar_to_realvar,n, eval_function);
+% Express C as a function of X
+f = @(X)optimize_function(X,weight_denom, weight_nom, Efield_objects, ...
+    mapp_real_to_Cpoly, mapp_imag_to_Cpoly, mapp_fvar_to_realvar, n, ...
+    'C', P1);
 
 % Find minimum value to M1(X) with particleswarm
 [options, lb, ub]=create_boundaries(particle_settings,n);
 [X,~,~,~] = particleswarm(f,n,lb,ub,options);
 
-% Compute M1 value and Efield with the optimal complex amplitudes
-% corresponding to solver argument X
-[y_val,E_opt] = optimize_function(X,weight_denom,healthy_tissue, Efield_objects,...
-    mapp_real_to_Cpoly,mapp_imag_to_Cpoly,mapp_fvar_to_realvar,n,eval_function);
+[y_val,E_opt] = optimize_function(X,weight_denom, weight_nom, Efield_objects, ...
+    mapp_real_to_Cpoly, mapp_imag_to_Cpoly, mapp_fvar_to_realvar, n, ...
+    'C', P1);
 
 disp(strcat('Value post-optimization: ', num2str(y_val)))
 
 end
-
