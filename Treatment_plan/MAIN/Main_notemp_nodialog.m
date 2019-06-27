@@ -13,10 +13,17 @@ olddir = pwd;
 filename = which('Main');
 [mainpath,~,~] = fileparts(filename);
 
+% Set up log directory
 c = clock;
 logpath = [mainpath filesep 'Logs'];
-logname = ['optimization_log_' num2str(c, '%d_%d_%d_%d_%d_%2.0f') '.txt'];
-diary([logpath filesep logname]);
+logfoldername = ['logs_' num2str(c, '%d_%d_%d_%d_%d_%2.0f')];
+mkdir(logpath, logfoldername);
+logpath = [logpath filesep logfoldername];
+cmd_logname = ['cmd_window_output.txt'];
+diary([logpath filesep cmd_logname]);
+fid = fopen([mainpath filesep 'currentlogname'], 'w');
+fprintf(fid, logfoldername);
+fclose(fid);
 
 cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
