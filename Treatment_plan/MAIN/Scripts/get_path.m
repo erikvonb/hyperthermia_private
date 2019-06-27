@@ -48,6 +48,13 @@ if nargin < 2
             path = [stage2path 'heat_capacity.mat'];
         case 'initial_perf_mat'
             path = [stage2path 'initial_perf.mat'];
+        case 'logs'
+            fid = fopen([scriptpath filesep '..' filesep ...
+                     'currentlogname'], 'r');
+            logfoldername = fgetl(fid);
+            fclose(fid);
+            path = [scriptpath filesep '..' filesep 'Logs' ...
+                filesep logfoldername];
     end
 elseif nargin==2
     % output

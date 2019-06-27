@@ -142,8 +142,8 @@ for i=1:4
         % Optimize according to goal function.
         switch goal_function
             case 'M1-C'
-                [E_opt] = OptimizeM1(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
-                    particle_settings, eval_function);
+                E_opt = OptimizeM1_new(e_firstIt, tumor_oct, healthy_tissue_oct, ...
+                    particle_settings, ['M1_' num2str(f_1) '_' num2str(i)]);
             case 'M2'
                 [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
                     particle_settings, eval_function);
@@ -170,21 +170,9 @@ for i=1:4
     % -------------- SECOND FREQUENCY -----------------------
     disp('OPTIMIZATION - second field')
     e_secondIt=e_cell{i+1};
-    % weight next field with previos P_opt in healthy tissue
-    E_opt = OptimizeC(e_secondIt, healthy_tissue_oct, tumor_oct, ...
-        nbrEfields, particle_settings, eval_function, p_f1_opt);
+    E_opt = OptimizeC(e_secondIt, tumor_oct, healthy_tissue_oct, ...
+        particle_settings, ['C_' num2str(f_2) '_' num2str(i)], p_f1_opt);
     
-%     weight_nom=Yggdrasil.Math.scalar_prod(healthy_tissue_oct,p_f1_opt);
-%     
-%     switch goal_function
-%         case 'M1-M1'
-%             [E_opt] = OptimizeM1(e_secondIt,tumor_oct,weight_nom,nbrEfields,...
-%                 particle_settings, eval_function,healthy_tissue_oct);
-%         case 'M2'
-%             [E_opt] = OptimizeM2(e_secondIt,tumor_oct,weight_nom,nbrEfields,...
-%                 particle_settings, eval_function,healthy_tissue_oct);
-%     end
-%     
     e_f2_opt = E_opt{1};
     for j=2:length(E_opt)
         e_f2_opt = e_f2_opt + E_opt{j};
@@ -196,12 +184,35 @@ for i=1:4
     
     % Time settings: first freq 1-x, second freq x
     f = @(x)(HTQ(abs_sq(x*e_f2_opt+(1-x)*e_f1_opt),tumor_mat,healthy_tissue_mat));
-    lb = zeros(1,1);
-    ub = ones(1,1);
+    lb = 0;
+    ub = 1;
+    
+    % Make a plot of HTQ as a function of time share
+    xs = linspace(0, 1, 10);
+    htq_to_plot = zeros(1, length(xs));
+    for j = 1:length(xs)
+        htq_to_plot(j) = f(xs(j));
+    end
+    figure_handles = findobj('type', 'figure');
+    fignum = length(figure_handles) + 1;
+    figure(fignum)
+    h = plot(xs, htq_to_plot, 'linewidth', 2);
+    grid on
+    xlabel('x')
+    ylabel('HTQ')
+    title(['HTQ as a function of the time share between ' ...
+           num2str(f_1) 'MHz (left) and ' num2str(f_2) 'MHz (right)'])
+    drawnow
+    logpath = get_path('logs');
+    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_1) ...
+        '-' num2str(f_2) '.eps']);
+    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_1) ...
+        '-' num2str(f_2) '.png']);
+    
     % Particle settings different than the rest since this is only a
     % scalar variable x
     options = optimoptions('particleswarm','SwarmSize',5,'PlotFcn',...
-        @pswplotbestf,'MaxIterations', 10, 'MaxStallIterations', 5);
+        @pswplotbestf,'MaxIterations', 15, 'MaxStallIterations', 5);
     x = particleswarm(f,1,lb,ub,options);
     
     %Combine efields of both frequencies, weighted with x

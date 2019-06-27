@@ -153,6 +153,25 @@ switch goal_function
         p_opt = abs_sq(e_tot_opt);
         
         disp('-----POST-OPTIMIZATION--M2---------')
+    case 'HTQ'
+        disp('-----OPTIMIZATION--HTQ--------------')
+        disp(['Picture shows M1-values. Value pre-optimazion: ' ...
+            num2str(M1(p_tot,tumor_oct,healthy_tissue_oct))])
+        eval_function = 'HTQ';
+        
+        %Optimization step.
+%         [E_opt] = OptimizeM1(e_f1,tumor_oct,healthy_tissue_oct, nbrEfields,...
+%             particle_settings, eval_function);
+        [E_opt] = OptimizeHTQ(e_f1,tumor_oct,healthy_tissue_oct, nbrEfields,...
+            particle_settings, eval_function);
+        %End of optimization, calculate PLD
+        e_tot_opt = E_opt{1};
+        for i=2:length(E_opt)
+            e_tot_opt = e_tot_opt + E_opt{i};
+        end
+        p_opt = abs_sq(e_tot_opt);
+        
+        disp('-----POST-OPTIMIZATION--HTQ---------')
         
 end
 disp(strcat('Post-optimization, HTQ = ',num2str(HTQ(p_opt,tumor_mat,healthy_tissue_mat))))

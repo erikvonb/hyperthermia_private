@@ -1,116 +1,19 @@
-function E_opt = OptimizeC(Efield_objects, weight_denom, weight_nom, ...
-    nbrEfields, particle_settings, eval_function, P1)
+function E_opt = OptimizeC(Efield_objects, tumor, healthy_tissue, ...
+    particle_settings, plotfilename, P1)
 
 % Cut off antennas with low power contribution in select_best
 % Efield_objects = select_best(Efield_objects, nbrEfields, weight_denom, healthy_tissue);
 
-% Create the two square matrices for the gen. eigenvalue representation
-% of M1
-A = zeros(length(Efield_objects));
-B = A;
-%ÄNDRAT - IF LOOP IMPLEMENTERAD
-% Calculate all integral values
-for i = 1:length(Efield_objects) % pick first Efield
-    for j = 1:length(Efield_objects) % pick second Efield
-        if i > j % Symmetry case
-            A(i,j) = conj(A(j,i));
-            B(i,j) = conj(B(j,i));
-            continue
-        end
-        e_i = Efield_objects{i};
-        e_j = Efield_objects{j};
-        P = scalar_prod(e_i,e_j);
-        
-        A(i,j) = scalar_prod_integral(P,weight_denom)/1e9;
-        B(i,j) = scalar_prod_integral(P,weight_nom)/1e9;
-    end
-end
+f = @(X) objective_function_C(X, tumor, healthy_tissue, ...
+    Efield_objects, P1);
 
-for i = 1:length(Efield_objects) % pick first Efield
-    for j = 1:length(Efield_objects) % pick second Efield
-        if i > j % Symmetry case
-            A(i,j) = conj(A(j,i));
-            B(i,j) = conj(B(j,i));
-            continue
-        end
-        e_i = Efield_objects{i};
-        e_j = Efield_objects{j};
-        P = scalar_prod(e_i,e_j);
-        
-        A(i,j) = scalar_prod_integral(P,weight_denom)/1e9;
-        %ÄNDRAT - B SATT I KVADRAT
-        B(i,j) = scalar_prod_integral(P,weight_nom)/1e9;
-    end
-end
-%FÄRDIGÄNDRAT - IF-LOOP IMPLEMENTERAD
-P_nom = CPoly(0);
-P_den = CPoly(0);
 n = length(Efield_objects);
-% Create the polynomials
-for i = 1:n % pick first Efield
-    for j = 1:n % pick second Efield
-        P_nom = P_nom + CPoly(B(i,j),[-i;j]);
-        P_den = P_den + CPoly(A(i,j),[-i;j]);
-    end
-end
+[options, lb, ub] = create_boundaries(particle_settings, 2*n, plotfilename);
+[X, ~, ~, ~] = particleswarm(f, 2*n, lb, ub, options);
 
-[numer_realP, mapp1_real_to_Cpoly, mapp1_imag_to_Cpoly] = to_real(P_nom);
-[denom_realP, mapp2_real_to_Cpoly, mapp2_imag_to_Cpoly] = to_real(P_den);
+[C_val, E_opt] = objective_function_C(X, tumor, healthy_tissue, ...
+    Efield_objects, P1);
+disp(['Value post-optimization: ', num2str(C_val)])
 
-mapp_real_to_Cpoly = containers.Map('KeyType','int64','ValueType','int64');
-mapp_imag_to_Cpoly = containers.Map('KeyType','int64','ValueType','int64');
-mapp_CPoly_to_real = containers.Map('KeyType','int64','ValueType','int64');
-mapp_CPoly_to_imag = containers.Map('KeyType','int64','ValueType','int64');
-
-KEYS = keys(mapp1_real_to_Cpoly);
-for i = 1:length(KEYS)
-    k = KEYS{i};
-    mapp_real_to_Cpoly(k) = mapp1_real_to_Cpoly(k);
-end
-KEYS = keys(mapp2_real_to_Cpoly);
-for i = 1:length(KEYS)
-    k = KEYS{i};
-    mapp_real_to_Cpoly(k) = mapp2_real_to_Cpoly(k);
-end
-
-KEYS = keys(mapp1_imag_to_Cpoly);
-for i = 1:length(KEYS)
-    k = KEYS{i};
-    mapp_imag_to_Cpoly(k) = mapp1_imag_to_Cpoly(k);
-end
-KEYS = keys(mapp2_imag_to_Cpoly);
-for i = 1:length(KEYS)
-    k = KEYS{i};
-    mapp_imag_to_Cpoly(k) = mapp2_imag_to_Cpoly(k);
-end
-
-KEYS = keys(mapp_real_to_Cpoly);
-for i = 1:length(KEYS)
-    key = KEYS{i};
-    mapp_CPoly_to_real(mapp_real_to_Cpoly(key)) = key;
-end
-KEYS = keys(mapp_imag_to_Cpoly);
-for i = 1:length(KEYS)
-    key = KEYS{i};
-    mapp_CPoly_to_imag(mapp_imag_to_Cpoly(key)) = key;
-end
-
-[mapp_realvar_to_fvar, mapp_fvar_to_realvar, n] ...
-    = CPoly.real_to_fmap({numer_realP, denom_realP});
-
-% Express C as a function of X
-f = @(X)optimize_function(X,weight_denom, weight_nom, Efield_objects, ...
-    mapp_real_to_Cpoly, mapp_imag_to_Cpoly, mapp_fvar_to_realvar, n, ...
-    'C', P1);
-
-% Find minimum value to M1(X) with particleswarm
-[options, lb, ub]=create_boundaries(particle_settings,n);
-[X,~,~,~] = particleswarm(f,n,lb,ub,options);
-
-[y_val,E_opt] = optimize_function(X,weight_denom, weight_nom, Efield_objects, ...
-    mapp_real_to_Cpoly, mapp_imag_to_Cpoly, mapp_fvar_to_realvar, n, ...
-    'C', P1);
-
-disp(strcat('Value post-optimization: ', num2str(y_val)))
 
 end

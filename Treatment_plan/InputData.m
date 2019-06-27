@@ -17,7 +17,7 @@ num_lines = [1,1,1,1,1,1,1,1,1,1,5];
 thisfile = which('InputData');
 [thispath,~,~] = fileparts(thisfile);
 default_data_path = [thispath filesep 'MAIN' filesep 'Data'];
-defaultans = {'duke','16','100','M1-M1','1','2.0',default_data_path,'2','1','1',['400']};
+defaultans = {'duke','16','100','M1-C','1','2.0',default_data_path,'2','1','1',['400']};
 options.Resize = 'on';
 [input] = inputdlg(prompt,title,num_lines,defaultans,options);
 

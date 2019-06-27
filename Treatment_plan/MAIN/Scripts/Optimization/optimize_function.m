@@ -1,5 +1,5 @@
 function [y_val, E_opt] = optimize_function(X,tumor,healthy_tissue,Efield_objects,...
-    mapp_real_to_Cpoly,mapp_imag_to_Cpoly,mapp_fvar_to_realvar,n, eval_function, P1)
+    mapp_real_to_Cpoly,mapp_imag_to_Cpoly,mapp_fvar_to_realvar,n, eval_function)
 % Function that converts the polynomial solver arguments X to 
 % complex amplitudes and applies them to the total Efield. ParticleSwarm
 % optimization function. 
@@ -73,8 +73,6 @@ switch eval_function
         y_val = M2(abs_sq(E_opt_sum),tumor,healthy_tissue);
     case 'HTQ'
         y_val = HTQ(abs_sq(E_opt_sum),tumor,healthy_tissue);
-    case 'C'
-        y_val = C(P1, abs_sq(E_opt_sum), healthy_tissue, tumor);
 end
 end
 
