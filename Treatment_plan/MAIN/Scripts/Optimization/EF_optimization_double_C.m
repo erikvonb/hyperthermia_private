@@ -27,11 +27,8 @@ if strcmp(which('Yggdrasil.Octree'), '')
     error('Need addpath to the self-developed package ''Yggdrasil''.')
 end
 
-% Get root path
-filename = which('EF_optimization_double');
-[rootpath,~,~] = fileparts(filename);
-datapath = [rootpath filesep '..' filesep '..' filesep 'Data'];
-scriptpath = [rootpath filesep '..'];
+datapath = get_path('data');
+scriptpath = get_path('scripts');
 addpath(scriptpath)
 
 % Initialize load_maestro to be able to load E_fields
@@ -104,27 +101,35 @@ disp(strcat('Pre-optimization, HTQ ',num2str(f_1),'MHz= ',...
 disp(strcat('Pre-optimization, HTQ ',num2str(f_2),'MHz= ',...
     num2str(HTQ(p_tot_f2,tumor_mat,healthy_tissue_mat))))
 
+objective_func = strsplit(goal_function, '-');
 switch goal_function
     case 'M1-M1'
-        eval_function='M1';
+%         eval_function='M1';
         disp('Preparing to optimize M1. First two figures show M1-values. Last figure shows HTQ.')
-        disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-        disp(['M1 Value pre-optimization for ' num2str(f_2) 'MHz: ' num2str(M1(p_tot_f2,tumor_oct,healthy_tissue_oct))])
-    case 'M1-HTQ'
-        eval_function='HTQ';
-        disp('Preparing to optimize M1. All figures shows HTQ.')
-        goal_function='M1-M1';
-    case 'M2'
-        eval_function='M2';
-        disp('Preparing to optimize M2. First two figures show M2-values. Last figure shows HTQ.')
-        disp(['M2 Value pre-optimization for ' num2str(f_1) 'MHz: ' num2str(M2(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-        disp(['M2 Value pre-optimization for ' num2str(f_2) 'MHz: ' num2str(M2(p_tot_f2,tumor_oct,healthy_tissue_oct))])
+%         disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
+%               num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
+%         disp(['M1 Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
+%               num2str(M1(p_tot_f2,tumor_oct,healthy_tissue_oct))])
+%     case 'M1-HTQ'
+%         eval_function='HTQ';
+%         disp('Preparing to optimize M1. All figures shows HTQ.')
+%         goal_function='M1-M1';
+%     case 'M2'
+%         eval_function='M2';
+%         disp('Preparing to optimize M2. First two figures show M2-values. Last figure shows HTQ.')
+%         disp(['M2 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
+%               num2str(M2(p_tot_f1,tumor_oct,healthy_tissue_oct))])
+%         disp(['M2 Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
+%               num2str(M2(p_tot_f2,tumor_oct,healthy_tissue_oct))])
     case 'M1-C'
-        eval_function='M1';
+%         eval_function='M1';
         disp('Preparing to optimize M1-C. First two figures show M1-values. Last figure shows HTQ.')
-        disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-        disp(['C Value pre-optimization for ' num2str(f_2) 'MHz: ' num2str(C(p_tot_f1,p_tot_f2,healthy_tissue_oct,tumor_oct))])
+%         disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
+%               num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
+%         disp(['C Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
+%               num2str(C(p_tot_f1,p_tot_f2,healthy_tissue_oct,tumor_oct))])
 end
+disp('NOT PRINTING PRE-OPTIMIZATION VALUES - COMMENTED')
 
 % Initialize cells to check each combination
 % Combinations: f1-f2,f2-f2,f2-f1,f1-f1
@@ -140,14 +145,18 @@ for i=1:4
         e_firstIt=e_cell{i};
         
         % Optimize according to goal function.
-        switch goal_function
-            case 'M1-C'
-                E_opt = OptimizeM1_new(e_firstIt, tumor_oct, healthy_tissue_oct, ...
-                    particle_settings, ['M1_' num2str(f_1) '_' num2str(i)]);
-            case 'M2'
-                [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
-                    particle_settings, eval_function);
-        end
+%         switch goal_function
+%             case 'M1-C'
+%                 E_opt = OptimizeM1_new(e_firstIt, tumor_oct, healthy_tissue_oct, ...
+%                     particle_settings, ['M1_' num2str(f_1) '_' num2str(i)]);
+%             case 'M2'
+%                 [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
+%                     particle_settings, eval_function);
+%         end
+        func = objective_func{1};
+        E_opt = do_optimization(func, e_firstIt, tumor_oct, ...
+            healthy_tissue_oct, particle_settings, ...
+            [func '_' num2str(f_cell{i}) '_' num2str(i)]);
         
         e_f1_opt = E_opt{1};
         for j=2:length(E_opt)
@@ -170,9 +179,13 @@ for i=1:4
     % -------------- SECOND FREQUENCY -----------------------
     disp('OPTIMIZATION - second field')
     e_secondIt=e_cell{i+1};
-    E_opt = OptimizeC(e_secondIt, tumor_oct, healthy_tissue_oct, ...
-        particle_settings, ['C_' num2str(f_2) '_' num2str(i)], p_f1_opt);
-    
+%     E_opt = OptimizeC(e_secondIt, tumor_oct, healthy_tissue_oct, ...
+%         particle_settings, ['C_' num2str(f_2) '_' num2str(i)], p_f1_opt);
+    func = objective_func{2};
+    E_opt = do_optimization(func, e_secondIt, tumor_oct, ...
+            healthy_tissue_oct, particle_settings, ...
+            [func '_' num2str(f_cell{i+1}) '_' num2str(i)], p_f1_opt);
+        
     e_f2_opt = E_opt{1};
     for j=2:length(E_opt)
         e_f2_opt = e_f2_opt + E_opt{j};
@@ -201,13 +214,14 @@ for i=1:4
     xlabel('x')
     ylabel('HTQ')
     title(['HTQ as a function of the time share between ' ...
-           num2str(f_1) 'MHz (left) and ' num2str(f_2) 'MHz (right)'])
+           num2str(f_cell{i}) 'MHz (left) and ' ...
+           num2str(f_cell{i+1}) 'MHz (right)'])
     drawnow
     logpath = get_path('logs');
-    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_1) ...
-        '-' num2str(f_2) '.eps']);
-    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_1) ...
-        '-' num2str(f_2) '.png']);
+    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
+        '-' num2str(f_cell{i+1}) '.eps']);
+    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
+        '-' num2str(f_cell{i+1}) '.png']);
     
     % Particle settings different than the rest since this is only a
     % scalar variable x
@@ -244,7 +258,8 @@ for i=1:4
 end
 
 disp('-----POST-OPTIMIZATION----------------------')
-disp(['Best combination: ',num2str(f_cell{bestIt}),'MHz with ',num2str(f_cell{bestIt+1}),'MHz. HTQ= ',num2str(HTQ_best)])
+disp(['Best combination: ',num2str(f_cell{bestIt}),'MHz with ', ...
+      num2str(f_cell{bestIt+1}),'MHz. HTQ= ',num2str(HTQ_best)])
 
 % Calculate settings for each Efield
 wave_opt = e_opt_1.C.values; %Complex amplitudes
@@ -278,8 +293,8 @@ mat_2 = p_opt_2.to_mat;
 mat_3 = p_opt.to_mat;
 
 %Save P matrices
-resultpath = [rootpath filesep '..' filesep '..' filesep 'Results' filesep 'P_and_unscaled_settings'];
-
+resultpath = [scriptpath filesep '..' filesep 'Results' filesep ...
+              'P_and_unscaled_settings'];
 if ~exist(resultpath,'dir')
     disp(['Creating result folder at ' resultpath]);
     [success,message,~] = mkdir(resultpath);
@@ -289,7 +304,8 @@ if ~exist(resultpath,'dir')
 end
 freq_opt=[f_cell{bestIt} f_cell{bestIt+1}];
 for i = 1:2
-    Pname = ['P_' num2str(i) 'of' num2str(2) '_' modelType '_' num2str(f_cell{bestIt+i-1}) 'MHz.mat'];
+    Pname = ['P_' num2str(i) 'of' num2str(2) '_' modelType '_' ...
+             num2str(f_cell{bestIt+i-1}) 'MHz.mat'];
     pname = ['mat_' num2str(i)];
     save([resultpath filesep Pname], pname, '-v7.3');
 end
