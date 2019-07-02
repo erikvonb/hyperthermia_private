@@ -55,6 +55,8 @@ if nargin < 2
             fclose(fid);
             path = [scriptpath filesep '..' filesep 'Logs' ...
                 filesep logfoldername];
+        case 'data'
+            path = [scriptpath filesep '..' filesep 'Data'];
     end
 elseif nargin==2
     % output

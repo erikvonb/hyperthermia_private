@@ -127,7 +127,7 @@ f = @(X)optimize_function(X,weight_denom, healthy_tissue,Efield_objects, ...
     mapp_real_to_Cpoly,mapp_imag_to_Cpoly,mapp_fvar_to_realvar,n, eval_function);
 
 % Find minimum value to M1(X) with particleswarm
-[options, lb, ub]=create_boundaries(particle_settings,n);
+[options, lb, ub]=create_PS_options(particle_settings,n);
 [X,~,~,~] = particleswarm(f,n,lb,ub,options);
 
 % Compute M1 value and Efield with the optimal complex amplitudes

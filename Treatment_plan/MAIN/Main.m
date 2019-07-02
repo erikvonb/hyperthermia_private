@@ -29,8 +29,13 @@ cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
 addpath([mainpath filesep 'Scripts'])
 
-[modelType,nbrEfields,PwrLimit,goal_function,iteration,hsthreshold, ...
-    SavePath1,particle_settings,freq] = InputData;
+% [modelType,nbrEfields,PwrLimit,goal_function,iteration,hsthreshold, ...
+%     SavePath1,particle_settings,freq] = InputData;
+[modelType, nbrEfields, PwrLimit, objective_function, iteration, hsthreshold, ...
+    SavePath1, particle_settings, freq, initial_PS_settings_files] ...
+    = main_input_dialog();
+
+%%
 hyp_compile
 hyp_init
 
@@ -39,15 +44,17 @@ fclose('all');
 save ('iteration','iteration');
 cd(mainpath);
 directorymaker(hsthreshold, iteration, freq, modelType, SavePath1);
-SavePath = [SavePath1 filesep 'HTPData' filesep num2str(hsthreshold),'_degree_',modelType, num2str(freq),'MHz',num2str(iteration)];
+SavePath = [SavePath1 filesep 'HTPData' filesep num2str(hsthreshold) '_degree_' modelType num2str(freq) 'MHz' num2str(iteration)];
 
 if length(freq) == 1
-    EF_optimization_single(freq, nbrEfields, modelType, goal_function, particle_settings, iteration)
+    EF_optimization_single(freq, nbrEfields, modelType, objective_function, particle_settings, iteration)
 elseif length(freq) == 2
-    if strcmp(goal_function, 'M1-C')
-        freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, goal_function, particle_settings);
+    if strcmp(objective_function, 'M1-C')
+        freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
+            objective_function, particle_settings, initial_PS_settings_files);
     else
-        freq_opt = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings);
+        freq_opt = EF_optimization_double(freq, nbrEfields, modelType, ...
+            objective_function, particle_settings);
     end
 elseif length(freq) > 2
     error('Optimization does not currently work for more than two frequencies. Prehaps combine_single can be of use?')

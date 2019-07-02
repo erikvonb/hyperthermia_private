@@ -1,4 +1,5 @@
-function freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, goal_function, particle_settings)
+function freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
+    objective_function, particle_settings, initial_PS_settings_files)
 %[P] = EF_OPTIMIZATION()
 %   Calculates an optimization of E-fields for two frequencies to maximize
 %   power in tumor while minimizing hotspots. All frequency combinations
@@ -101,8 +102,8 @@ disp(strcat('Pre-optimization, HTQ ',num2str(f_1),'MHz= ',...
 disp(strcat('Pre-optimization, HTQ ',num2str(f_2),'MHz= ',...
     num2str(HTQ(p_tot_f2,tumor_mat,healthy_tissue_mat))))
 
-objective_func = strsplit(goal_function, '-');
-switch goal_function
+objective_func = strsplit(objective_function, '-');
+switch objective_function
     case 'M1-M1'
 %         eval_function='M1';
         disp('Preparing to optimize M1. First two figures show M1-values. Last figure shows HTQ.')
@@ -141,7 +142,7 @@ for i=1:4
     % -------------- FIRST FREQUENCY -----------------------
     disp(['-----OPTIMIZATION combo ',num2str(f_cell{i}),'MHz-', num2str(f_cell{i+1}),'MHz-------'])
     %Calculate the first fields only once per frequency
-    if i<3
+    if i < 3
         e_firstIt=e_cell{i};
         
         % Optimize according to goal function.
@@ -153,10 +154,18 @@ for i=1:4
 %                 [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
 %                     particle_settings, eval_function);
 %         end
+        if i == 1
+            initial_PS_settings = load_presaved_PS_settings(...
+                initial_PS_settings_files('o1-f1'), nbrEfields);
+        else
+            initial_PS_settings = load_presaved_PS_settings(...
+                initial_PS_settings_files('o1-f2'), nbrEfields);
+        end
         func = objective_func{1};
         E_opt = do_optimization(func, e_firstIt, tumor_oct, ...
             healthy_tissue_oct, particle_settings, ...
-            [func '_' num2str(f_cell{i}) '_' num2str(i)]);
+            [func '_' num2str(f_cell{i}) '_' num2str(i)], ...
+            initial_PS_settings);
         
         e_f1_opt = E_opt{1};
         for j=2:length(E_opt)
@@ -164,6 +173,11 @@ for i=1:4
         end
         % save eField for next iterations
         e_prev{i} = e_f1_opt; %It1: f1, It2: f2.
+        
+        % Save the resulting antenna settings for future quick-run/debug use.
+        write_intermediate_settings(get_path('logs'), e_f1_opt, ...
+            [modelType '_' func], f_cell{i});
+        
     elseif i==3
         % Use previously calculated fields in iteration 3 and 4
         e_f1_opt = e_prev{2}; %It3: f2, It4: f1
@@ -178,50 +192,62 @@ for i=1:4
     
     % -------------- SECOND FREQUENCY -----------------------
     disp('OPTIMIZATION - second field')
+    if i == 3 || i == 4
+        initial_PS_settings = load_presaved_PS_settings(...
+            initial_PS_settings_files('o2-f1'), nbrEfields);
+    else
+        initial_PS_settings = load_presaved_PS_settings(...
+            initial_PS_settings_files('o2-f2'), nbrEfields);
+    end
     e_secondIt=e_cell{i+1};
-%     E_opt = OptimizeC(e_secondIt, tumor_oct, healthy_tissue_oct, ...
-%         particle_settings, ['C_' num2str(f_2) '_' num2str(i)], p_f1_opt);
     func = objective_func{2};
     E_opt = do_optimization(func, e_secondIt, tumor_oct, ...
             healthy_tissue_oct, particle_settings, ...
-            [func '_' num2str(f_cell{i+1}) '_' num2str(i)], p_f1_opt);
+            [func '_' num2str(f_cell{i+1}) '_' num2str(i)], ...
+            initial_PS_settings, p_f1_opt);
         
     e_f2_opt = E_opt{1};
     for j=2:length(E_opt)
         e_f2_opt = e_f2_opt + E_opt{j};
     end
     
+    % Save the resulting antenna settings for future quick-run/debug use.
+    write_intermediate_settings(get_path('logs'), e_f2_opt, ...
+        [modelType '_' func], f_cell{i+1});
+    
     p_f2_opt = abs_sq(e_f2_opt); %PLD of second frequency
     disp(['Current HTQ for second frequency: ',num2str(HTQ(p_f2_opt,tumor_mat,healthy_tissue_mat))])
     disp('OPTIMIZATION - combining two frequencies!')
     
     % Time settings: first freq 1-x, second freq x
-    f = @(x)(HTQ(abs_sq(x*e_f2_opt+(1-x)*e_f1_opt),tumor_mat,healthy_tissue_mat));
+    f = @(x) HTQ(x*p_f2_opt+(1-x)*p_f1_opt, tumor_mat, healthy_tissue_mat);
     lb = 0;
     ub = 1;
     
-    % Make a plot of HTQ as a function of time share
-    xs = linspace(0, 1, 10);
-    htq_to_plot = zeros(1, length(xs));
-    for j = 1:length(xs)
-        htq_to_plot(j) = f(xs(j));
+    if false
+        % Make a plot of HTQ as a function of time share
+        xs = linspace(0, 1, 10);
+        htq_to_plot = zeros(1, length(xs));
+        for j = 1:length(xs)
+            htq_to_plot(j) = f(xs(j));
+        end
+        figure_handles = findobj('type', 'figure');
+        fignum = length(figure_handles) + 1;
+        figure(fignum)
+        h = plot(xs, htq_to_plot, 'linewidth', 2);
+        grid on
+        xlabel('x')
+        ylabel('HTQ')
+        title(['HTQ as a function of the time share between ' ...
+               num2str(f_cell{i}) 'MHz (left) and ' ...
+               num2str(f_cell{i+1}) 'MHz (right)'])
+        drawnow
+        logpath = get_path('logs');
+        saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
+            '-' num2str(f_cell{i+1}) '.eps']);
+        saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
+            '-' num2str(f_cell{i+1}) '.png']);
     end
-    figure_handles = findobj('type', 'figure');
-    fignum = length(figure_handles) + 1;
-    figure(fignum)
-    h = plot(xs, htq_to_plot, 'linewidth', 2);
-    grid on
-    xlabel('x')
-    ylabel('HTQ')
-    title(['HTQ as a function of the time share between ' ...
-           num2str(f_cell{i}) 'MHz (left) and ' ...
-           num2str(f_cell{i+1}) 'MHz (right)'])
-    drawnow
-    logpath = get_path('logs');
-    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
-        '-' num2str(f_cell{i+1}) '.eps']);
-    saveas(h, [logpath filesep 'timeshare_plot_' num2str(f_cell{i}) ...
-        '-' num2str(f_cell{i+1}) '.png']);
     
     % Particle settings different than the rest since this is only a
     % scalar variable x
@@ -230,8 +256,8 @@ for i=1:4
     x = particleswarm(f,1,lb,ub,options);
     
     %Combine efields of both frequencies, weighted with x
-    p_opt_htq = abs_sq(x*e_f2_opt+(1-x)*e_f1_opt);
-    HTQ_curr=HTQ(p_opt_htq,tumor_mat,healthy_tissue_mat);
+    p_opt_htq = x*p_f2_opt+(1-x)*p_f1_opt;
+    HTQ_curr=HTQ(p_opt_htq, tumor_mat, healthy_tissue_mat);
     
     disp(strcat('ITERATION DONE: Current combination HTQ= ',num2str(HTQ_curr)))
     disp(['Time share: First field: ',num2str(1-x),', second field: ',num2str(x)])

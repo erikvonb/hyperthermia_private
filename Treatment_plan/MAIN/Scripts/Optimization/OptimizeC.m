@@ -8,7 +8,7 @@ f = @(X) objective_function_C(X, tumor, healthy_tissue, ...
     Efield_objects, P1);
 
 n = length(Efield_objects);
-[options, lb, ub] = create_boundaries(particle_settings, 2*n, plotfilename);
+[options, lb, ub] = create_PS_options(particle_settings, 2*n, plotfilename);
 [X, ~, ~, ~] = particleswarm(f, 2*n, lb, ub, options);
 
 [C_val, E_opt] = objective_function_C(X, tumor, healthy_tissue, ...
