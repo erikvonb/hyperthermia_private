@@ -17,6 +17,13 @@ function [f_val, E_opt] = objective_function(func, X, tumor, healthy_tissue, ...
 % E_opt: The sum of the modified E-fields.
 % -------------------------------------------------------
 
+datapath = get_path('data');
+modelType = 'duke';
+% Initialize load_maestro to be able to load E_fields
+Efilename = @(f,a)[datapath filesep 'Efield_' num2str(f) 'MHz_A' num2str(a) '_' modelType];
+sigma     = @(f)[datapath filesep 'sigma_' modelType '_' num2str(f) 'MHz'];
+rel_eps = 0.1;
+Yggdrasil.Utils.Efield.load_maestro('init', Efilename, sigma, rel_eps);
 
 % Apply coefficients
 E_opt = cell(length(Efield_objects),1);

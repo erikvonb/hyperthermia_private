@@ -22,6 +22,7 @@ end
 n = length(Efield_objects);
 [options, lb, ub] = create_PS_options(particle_settings, 2*n, ...
     plotfilename, initial_PS_settings);
+options.UseParallel = true;
 [X, ~, ~, ~] = particleswarm(f, 2*n, lb, ub, options);
 
 switch func
