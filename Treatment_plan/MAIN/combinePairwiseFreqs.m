@@ -14,9 +14,16 @@ for i = 1:(length(freqs_to_combine)-1)
         particle_settings = [2, 0, 10];
         thisfile = which('combinePairwiseFreqs');
         [thispath,~,~] = fileparts(thisfile);
-        SavePath1 = [thispath filesep 'Data'];        
+        SavePath1 = [thispath filesep 'Data'];
+        initial_PS_settings_files = containers.Map(...
+            ["o1-f1", "o1-f2", "o2-f1", "o2-f2"], ...
+            ["NONE", "NONE", "NONE", "NONE"]);
+        freq_combs = [1 0 1 0];
+        % f1-f2, f2-f2, f2-f1, f1-f1
         
         freq = [freqs_to_combine(i), freqs_to_combine(j)];
+        
+        
         Main_notemp_nodialog;
     end
 end
