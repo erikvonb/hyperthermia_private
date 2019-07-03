@@ -29,13 +29,9 @@ cd(mainpath)
 addpath([mainpath filesep 'Scripts' filesep 'Optimization'])
 addpath([mainpath filesep 'Scripts'])
 
-% [modelType,nbrEfields,PwrLimit,goal_function,iteration,hsthreshold, ...
-%     SavePath1,particle_settings,freq] = InputData;
 [modelType, nbrEfields, PwrLimit, objective_function, iteration, hsthreshold, ...
-    SavePath1, particle_settings, freq, initial_PS_settings_files] ...
+    SavePath1, particle_settings, freq, initial_PS_settings_files, freq_combs] ...
     = main_input_dialog();
-
-%%
 hyp_compile
 hyp_init
 
@@ -51,7 +47,8 @@ if length(freq) == 1
 elseif length(freq) == 2
     if strcmp(objective_function, 'M1-C')
         freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
-            objective_function, particle_settings, initial_PS_settings_files);
+            objective_function, particle_settings, ...
+            initial_PS_settings_files, freq_combs);
     else
         freq_opt = EF_optimization_double(freq, nbrEfields, modelType, ...
             objective_function, particle_settings);

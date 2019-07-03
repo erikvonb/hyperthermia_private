@@ -1,5 +1,6 @@
 function freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
-    objective_function, particle_settings, initial_PS_settings_files)
+    objective_function, particle_settings, ...
+    initial_PS_settings_files, freq_combs)
 %[P] = EF_OPTIMIZATION()
 %   Calculates an optimization of E-fields for two frequencies to maximize
 %   power in tumor while minimizing hotspots. All frequency combinations
@@ -138,11 +139,17 @@ e_cell={e_f1,e_f2,e_f2,e_f1,e_f1};
 f_cell={f_1,f_2,f_2,f_1,f_1};
 e_prev=cell(1,2);
 
-for i=1:4
+HTQ_best = Inf;
+
+all_combs = 1:4;
+freq_combs = logical(freq_combs);
+for i = all_combs(freq_combs)
     % -------------- FIRST FREQUENCY -----------------------
     disp(['-----OPTIMIZATION combo ',num2str(f_cell{i}),'MHz-', num2str(f_cell{i+1}),'MHz-------'])
     %Calculate the first fields only once per frequency
-    if i < 3
+    if i < 3 ...
+            || (i == 3 && ~freq_combs(2)) ...
+            || (i == 4 && ~freq_combs(1))
         e_firstIt=e_cell{i};
         
         % Optimize according to goal function.
@@ -154,7 +161,7 @@ for i=1:4
 %                 [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
 %                     particle_settings, eval_function);
 %         end
-        if i == 1
+        if i == 1 || i == 4
             initial_PS_settings = load_presaved_PS_settings(...
                 initial_PS_settings_files('o1-f1'), nbrEfields);
         else
