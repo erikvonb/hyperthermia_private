@@ -44,7 +44,9 @@ if length(freq) == 1
     EF_optimization_single(freq, nbrEfields, modelType, goal_function, particle_settings, iteration)
 elseif length(freq) == 2
     if strcmp(goal_function, 'M1-C')
-        freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, goal_function, particle_settings);
+        freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
+            goal_function, particle_settings, ...
+            initial_PS_settings_files, freq_combs);
     else
         freq_opt = EF_optimization_double(freq, nbrEfields, modelType, goal_function, particle_settings);
     end

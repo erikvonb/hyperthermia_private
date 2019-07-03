@@ -1,6 +1,6 @@
 function [modelType, nbrEfields, pwrLimit, objective_f, iteration, ...
     hsthreshold, data_path, particle_settings, freq_vec, ...
-    settings_files, freq_combs] = main_input_dialog()
+    settings_files, freq_combs, use_parallel] = main_input_dialog()
 
 cumulative_height = 0;
 models = ["duke", "child"];
@@ -69,6 +69,8 @@ freq_1_h = make_control(p_left, 'editnum', default_f1, [], ...
 make_control(p_left, 'text', 'Second frequency (0 if none):', []);
 freq_2_h = make_control(p_left, 'editnum', default_f2, [], ...
     'valuechangedfcn', @(h, ~) update_text_right_panel(2, h, 2));
+parallel_h = make_control(p_left, 'checkbox', 'Use parallel PSO', ...
+    [sub_width / 2, 10, sub_width / 2, sub_height]);
 
 cumulative_height = 0;
 
@@ -351,6 +353,7 @@ function collectInput()
     particle_settings(3) = ps_stall_iter_h.Value;
     freq_vec(1) = freq_1_h.Value;
     freq_vec(2) = freq_2_h.Value;
+    use_parallel = parallel_h.Value;
     
     for i = 1:4
         h = freq_combs_h{i};
