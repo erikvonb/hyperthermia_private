@@ -41,12 +41,14 @@ switch func
     case 'M1'
         f_val = M1(abs_sq(E_opt_sum), tumor, healthy_tissue);
     case 'M2'
-        % TODO
+        f_val = M2(abs_sq(E_opt_sum), tumor, healthy_tissue);
     case 'C'
         f_val = C(P1, abs_sq(E_opt_sum), healthy_tissue, tumor);
+    case 'HTQ'
+        f_val = HTQ(abs_sq(E_opt_sum), tumor, healthy_tissue);
     otherwise
         error(['Error: Incorrect objective function name. ' ...
-               'Must be either ''M1'', ''M2'', or ''C''.'])
+               'Must be either ''M1'', ''M2'', ''C'' or ''HTQ''.'])
 end
 
 end

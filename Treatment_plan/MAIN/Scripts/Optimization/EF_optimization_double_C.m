@@ -1,5 +1,5 @@
 function freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
-    objective_function, particle_settings, ...
+    objective_func, particle_settings, ...
     initial_PS_settings_files, freq_combs, use_parallel)
 %[P] = EF_OPTIMIZATION()
 %   Calculates an optimization of E-fields for two frequencies to maximize
@@ -11,14 +11,15 @@ function freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
 % nbrEfields:        number of Efields to be optimized. If this is lower
 %                    than number of antennas, antennas with low power
 %                    contribution is cut off.
-% modelType:         string with model name. Duke- or Child models are accepted.
-% goal_function:     string with which goal function to be optimized.
-%                    Options are 'M1-M1', which will optimize over M1 and
-%                    show M1 in particleswarm, 'M1-HTQ' which will optimize
-%                    over M1 and show HTQ in particleswarm, or 'M2' which
-%                    will optimize over M2.
-% particle_settings: vector with [swarmsize, max_iterations, stall_iterations]
-%                    for particleswarm.
+% modelType:         string with model name. Duke- or Child models are
+%                    accepted.
+% objective_func:    string containing which objective function to be
+%                    optimized. Options are 'M1', 'M1-C', 'M2' and 'HTQ'.
+%                    M1-C optimizes the first frequency using M1, and then
+%                    optimizes the second frequency using the C objective
+%                    function using the resulting PLD.
+% particle_settings: vector with [swarmsize, max_iterations,
+%                    stall_iterations] for particleswarm.
 %------OUTPUT----------------------------------------------------------
 % freq_opt:          the optimal pair of frequencies - one of f1-f2, f2-f2,
 %                    f2-f1, f1-f1.
@@ -103,33 +104,18 @@ disp(strcat('Pre-optimization, HTQ ',num2str(f_1),'MHz= ',...
 disp(strcat('Pre-optimization, HTQ ',num2str(f_2),'MHz= ',...
     num2str(HTQ(p_tot_f2,tumor_mat,healthy_tissue_mat))))
 
-objective_func = strsplit(objective_function, '-');
-switch objective_function
-    case 'M1-M1'
-%         eval_function='M1';
-        disp('Preparing to optimize M1. First two figures show M1-values. Last figure shows HTQ.')
-%         disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
-%               num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-%         disp(['M1 Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
-%               num2str(M1(p_tot_f2,tumor_oct,healthy_tissue_oct))])
-%     case 'M1-HTQ'
-%         eval_function='HTQ';
-%         disp('Preparing to optimize M1. All figures shows HTQ.')
-%         goal_function='M1-M1';
-%     case 'M2'
-%         eval_function='M2';
-%         disp('Preparing to optimize M2. First two figures show M2-values. Last figure shows HTQ.')
-%         disp(['M2 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
-%               num2str(M2(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-%         disp(['M2 Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
-%               num2str(M2(p_tot_f2,tumor_oct,healthy_tissue_oct))])
+switch objective_func
+    case 'M1'
+        disp(['Preparing to optimize M1. First two figures show ', ...
+              'M1-values. Last figure shows HTQ.'])
+    case 'M2'
+        disp(['Preparing to optimize M2. First two figures show ', ...
+              'M2-values. Last figure shows HTQ.'])
     case 'M1-C'
-%         eval_function='M1';
-        disp('Preparing to optimize M1-C. First two figures show M1-values. Last figure shows HTQ.')
-%         disp(['M1 Value pre-optimization for ' num2str(f_1) 'MHz: ' ...
-%               num2str(M1(p_tot_f1,tumor_oct,healthy_tissue_oct))])
-%         disp(['C Value pre-optimization for ' num2str(f_2) 'MHz: ' ...
-%               num2str(C(p_tot_f1,p_tot_f2,healthy_tissue_oct,tumor_oct))])
+        disp(['Preparing to optimize M1-C. First figure show M1-values ', ...
+              'second shows M2. Last figure shows HTQ.'])
+    case 'HTQ'
+        disp('Preparing to optimize HTQ. All figures show HTQ.')
 end
 disp('NOT PRINTING PRE-OPTIMIZATION VALUES - COMMENTED')
 
@@ -140,7 +126,7 @@ f_cell={f_1,f_2,f_2,f_1,f_1};
 e_prev=cell(1,2);
 
 HTQ_best = Inf;
-
+objective_func = strsplit(objective_func, '-');
 all_combs = 1:4;
 freq_combs = logical(freq_combs);
 for i = all_combs(freq_combs)
@@ -151,16 +137,6 @@ for i = all_combs(freq_combs)
             || (i == 3 && ~freq_combs(2)) ...
             || (i == 4 && ~freq_combs(1))
         e_firstIt=e_cell{i};
-        
-        % Optimize according to goal function.
-%         switch goal_function
-%             case 'M1-C'
-%                 E_opt = OptimizeM1_new(e_firstIt, tumor_oct, healthy_tissue_oct, ...
-%                     particle_settings, ['M1_' num2str(f_1) '_' num2str(i)]);
-%             case 'M2'
-%                 [E_opt] = OptimizeM2(e_firstIt,tumor_oct,healthy_tissue_oct,nbrEfields,...
-%                     particle_settings, eval_function);
-%         end
         if i == 1 || i == 4
             initial_PS_settings = load_presaved_PS_settings(...
                 initial_PS_settings_files('o1-f1'), nbrEfields);
@@ -207,7 +183,7 @@ for i = all_combs(freq_combs)
             initial_PS_settings_files('o2-f2'), nbrEfields);
     end
     e_secondIt=e_cell{i+1};
-    func = objective_func{2};
+    func = objective_func{end};
     E_opt = do_optimization(func, e_secondIt, tumor_oct, ...
             healthy_tissue_oct, particle_settings, ...
             [func '_' num2str(f_cell{i+1}) '_' num2str(i)], ...

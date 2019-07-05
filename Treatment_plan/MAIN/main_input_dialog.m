@@ -2,34 +2,35 @@ function [modelType, nbrEfields, pwrLimit, objective_f, iteration, ...
     hsthreshold, data_path, particle_settings, freq_vec, ...
     settings_files, freq_combs, use_parallel] = main_input_dialog()
 
+% Define variables and some initial output variables
 cumulative_height = 0;
 models = ["duke", "child"];
-objectives = ["M1-M1", "M1-C", "M1-HTQ", "M2-M2"];
+objectives = ["M1", "M1-C", "M2", "HTQ"];
 default_o1 = 'M1';
-default_o2 = 'M1';
-default_f1 = 500;
-default_f2 = 0;
+default_o2 = 'C';
+default_f1 = 400;
+default_f2 = 500;
 % Save these return values early to use in various functions.
-modelType = 'duke';
-objective_f = [default_o1 '-' default_o2];
+modelType = models{1};
+objective_f = objectives{2};
 freq_vec = [default_f1, default_f2];
 freq_combs = ones(1, 4);
-
-total_width = 600;
-sub_width = total_width/2 - 20;
-sub_height = 18;
-total_height = 500;
-
 settings_files = containers.Map(["o1-f1", "o1-f2", "o2-f1", "o2-f2"], ...
     {find_settings_file('o1-f1'), ...
      find_settings_file('o1-f2'), ...
      find_settings_file('o2-f1'), ...
      find_settings_file('o2-f2')});
 
+% Define primary window sizes
+total_width = 600;
+sub_width = total_width/2 - 20;
+sub_height = 18;
+total_height = 500;
 res = get(0, 'screensize');
 l_main_pos = (res(3) - total_width) / 2;
 b_main_pos = (res(4) - total_height) / 2;
 
+% Create main figure and sub-panels
 f_main = uifigure('name', 'Input data', ...
     'position', [l_main_pos, b_main_pos, total_width, total_height]);
 p_left = uipanel(f_main, ...
@@ -39,6 +40,7 @@ p_right = uipanel(f_main, ...
     'position', [total_width/2, 0, total_width/2, total_height], ...
     'title', 'Quick-test/debug options');
 
+% Add control elements to the left panel
 make_control(p_left, 'text', 'Model type:', []);
 mtype_h = make_control(p_left, 'dropdown', models, [], ...
     'valuechangedfcn', @(h, ~) update_var(h, 'model type'));
@@ -48,7 +50,9 @@ make_control(p_left, 'text', 'Antenna power limit (% of 150W):', []);
 pwr_lim_h = make_control(p_left, 'editnum', 1, []);
 make_control(p_left, 'text', 'Objective function:', []);
 obj_f_h = make_control(p_left, 'dropdown', objectives, [], ...
-    'valuechangedfcn', @(h, ~) update_text_right_panel(1, h));
+    'valuechangedfcn', @(h, ~) update_text_right_panel(1, h), ...
+    'items', objectives, ...
+    'value', 'M1-C');
 make_control(p_left, 'text', 'Iteration number:', []);
 it_num_h = make_control(p_left, 'editnum', 1, []);
 make_control(p_left, 'text', 'Hotspot threshold:', []);
@@ -72,6 +76,7 @@ freq_2_h = make_control(p_left, 'editnum', default_f2, [], ...
 parallel_h = make_control(p_left, 'checkbox', 'Use parallel PSO', ...
     [sub_width / 2, 10, sub_width / 2, sub_height]);
 
+% Add control elements to the right panel
 cumulative_height = 0;
 
 h = make_settings_finder(p_right, ...
@@ -128,9 +133,13 @@ function objs = make_combinations_chooser(p)
         posvec, ...
         'value', 1);
     posvec(1) = 10 + 3 * (sub_width - 20) / 4;
-    objs{4} = make_control_no_advancement(p, 'checkbox', 'f1-f1', ...
+    objs{4} = make_control(p, 'checkbox', 'f1-f1', ...
         posvec, ...
         'value', 1);
+    
+    make_control(p, 'text', ...
+    sprintf(['Note: The last two options above ' ...
+             'only apply\nif the objective function is M1-C']), []);
 end
 
 function update_var(h, varname)
@@ -161,6 +170,11 @@ end
 
 function path = find_settings_file(str)
     funcs = strsplit(objective_f, '-');
+    if length(funcs) == 1 && (strcmp(str, 'o2-f1') || strcmp(str, 'o2-f2'))
+        path = 'NONE';
+        return
+    end
+    
     switch str
         case 'o1-f1'
             func = funcs{1};
@@ -215,13 +229,13 @@ function update_text_right_panel(n, new_h, f_n)
             % Update return value early, for use in find_settings_file()
             objective_f = str;
             % Update text in right panel
-            for i = 1:length(ox_fy_text_h)
+            for i = 1:2
                 % str is the value of the objective function dropdown
                 % value, e.g. 'M1-M1'.
                 obj_funcs = strsplit(str, '-');
                 text_h = ox_fy_text_h{i};
                 strings = strsplit(get(text_h, 'Text'));
-                new_string = [obj_funcs{ceil(i/2)}, ' ', strings{2}];
+                new_string = [obj_funcs{1}, ' ', strings{2}];
                 set(text_h, 'Text', new_string);
             end
         case 2  % Change frequency text displayed

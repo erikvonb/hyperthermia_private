@@ -20,7 +20,7 @@ logpath = [mainpath filesep 'Logs'];
 logfoldername = ['logs_' num2str(c, '%d_%d_%d_%d_%d_%2.0f')];
 mkdir(logpath, logfoldername);
 logpath = [logpath filesep logfoldername];
-cmd_logname = ['cmd_window_output.txt'];
+cmd_logname = 'cmd_window_output.txt';
 diary([logpath filesep cmd_logname]);
 fid = fopen([mainpath filesep 'currentlogname'], 'w');
 fprintf(fid, logfoldername);
@@ -44,16 +44,12 @@ directorymaker(hsthreshold, iteration, freq, modelType, SavePath1);
 SavePath = [SavePath1 filesep 'HTPData' filesep num2str(hsthreshold) '_degree_' modelType num2str(freq) 'MHz' num2str(iteration)];
 
 if length(freq) == 1
+    % TODO: make single work
     EF_optimization_single(freq, nbrEfields, modelType, objective_func, particle_settings, iteration)
 elseif length(freq) == 2
-    if strcmp(objective_func, 'M1-C')
-        freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
-            objective_func, particle_settings, ...
-            initial_PS_settings_files, freq_combs, use_parallel);
-    else
-        freq_opt = EF_optimization_double(freq, nbrEfields, modelType, ...
-            objective_func, particle_settings);
-    end
+    freq_opt = EF_optimization_double_C(freq, nbrEfields, modelType, ...
+        objective_func, particle_settings, ...
+        initial_PS_settings_files, freq_combs, use_parallel);
 elseif length(freq) > 2
     error('Optimization does not currently work for more than two frequencies. Prehaps combine_single can be of use?')
 end
